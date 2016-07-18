@@ -57,6 +57,8 @@ macro_rules! simple_bitfield_field {
 #[macro_export]
 macro_rules! simple_bitfield {
     ($name:ident, $t:ty, $($rest:tt)*) => {
+         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+         #[repr(C)]
          pub struct $name(pub $t);
          impl $name {
              fn get_range_(&self, msb: usize, lsb: usize) -> $t {
