@@ -1,0 +1,6 @@
+[package]
+name = "simple_bitfield"
+version = "0.1.0"
+authors = ["Loïc Damien <loic.damien@dzamlo.ch>"]
+
+[dependencies]
