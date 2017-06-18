@@ -1,3 +1,4 @@
+#![no_std]
 #[macro_export]
 macro_rules! simple_bitfield_field {
    ($name:ident, $t:ty,) => {};
