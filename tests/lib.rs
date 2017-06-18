@@ -17,6 +17,7 @@ simple_bitfield! {
     _, setter_only: 4, 2,
     getter_only_array, _: 5, 3; 3,
     _, setter_only_array: 6, 4; 3,
+    all_bits, set_all_bits: 31, 0,
 }
 
 #[test]
@@ -140,6 +141,18 @@ fn test_array_field2() {
     assert_eq!(0, fb.foo6(0));
     assert_eq!(0, fb.foo6(1));
     assert_eq!(7, fb.foo6(2));
+}
 
+#[test]
+fn test_all_bits() {
+    let mut fb = FooBar(0);
 
+    assert_eq!(0, fb.all_bits());
+
+    fb.set_all_bits(!0u32);
+    assert_eq!(!0u32, fb.0);
+    assert_eq!(!0u32, fb.all_bits());
+
+    fb.0 = 0x80000001;
+    assert_eq!(0x80000001, fb.all_bits());
 }
