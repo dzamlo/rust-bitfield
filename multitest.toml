@@ -1,0 +1,22 @@
+[[tests]]
+name = "cargo-test-{{toolchain}}"
+command = ["rustup", "run", "{{toolchain}}", "cargo", "test", "--frozen"]
+
+[[tests.env]]
+name = "CARGO_TARGET_DIR"
+value = "target/{{name}}"
+
+[tests.variables]
+toolchain = ["stable", "beta", "nightly"]
+
+[[tests]]
+name = "cargo-clippy"
+command = ["rustup", "run", "nightly", "cargo", "clippy", "--frozen", "--", "-D", "clippy"]
+
+[[tests.env]]
+name = "CARGO_TARGET_DIR"
+value = "target/cargo-test-nightly"
+
+[[tests]]
+name = "cargo-fmt"
+command = ["cargo", "fmt", "--", "--write-mode=diff"]

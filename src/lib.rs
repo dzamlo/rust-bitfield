@@ -9,6 +9,8 @@ macro_rules! simple_bitfield_field {
        simple_bitfield_field!{$t, $($rest)*}
    };
    ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
+       #[allow(unknown_lints)]
+       #[allow(eq_op)]
        pub fn $setter(&mut self, index: usize, value: $t) {
            debug_assert!(index < $count);
            let width = $msb - $lsb + 1;
@@ -25,6 +27,8 @@ macro_rules! simple_bitfield_field {
        simple_bitfield_field!{$t, $($rest)*}
    };
    ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
+       #[allow(unknown_lints)]
+       #[allow(eq_op)]
        pub fn $getter(&self, index: usize) -> $t {
            debug_assert!(index < $count);
            let width = $msb - $lsb + 1;
@@ -50,22 +54,25 @@ macro_rules! simple_bitfield_field {
 #[macro_export]
 macro_rules! simple_bitfield {
     ($name:ident, $t:ty, $($rest:tt)*) => {
-         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-         #[repr(C)]
-         pub struct $name(pub $t);
-         impl $name {
-             fn get_range_(&self, msb: usize, lsb: usize) -> $t {
-                 let bit_len = mem::size_of::<$t>()*8;
-                 (self.0 << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb)
-             }
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+        #[repr(C)]
+        pub struct $name(pub $t);
+        impl $name {
+            fn get_range_(&self, msb: usize, lsb: usize) -> $t {
+                let bit_len = mem::size_of::<$t>()*8;
+                (self.0 << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb)
+            }
 
-             fn set_range_(&mut self, msb: usize, lsb: usize, value: $t) {
-                 let bit_len = mem::size_of::<$t>()*8;
-                 let mask: $t = !(0 as $t) << (bit_len - msb - 1) >> (bit_len - msb - 1 + lsb) << (lsb);
-                 self.0 &= !mask;
-                 self.0 |= (value << lsb) & mask;
-             }
-             simple_bitfield_field!{$t, $($rest)*}
+            fn set_range_(&mut self, msb: usize, lsb: usize, value: $t) {
+                let bit_len = mem::size_of::<$t>()*8;
+                let mask: $t = !(0 as $t)
+                    << (bit_len - msb - 1)
+                    >> (bit_len - msb - 1 + lsb)
+                    << (lsb);
+                self.0 &= !mask;
+                self.0 |= (value << lsb) & mask;
+            }
+            simple_bitfield_field!{$t, $($rest)*}
          }
     }
 }
