@@ -53,6 +53,32 @@ macro_rules! simple_bitfield_field {
 
 #[macro_export]
 macro_rules! simple_bitfield {
+    ($name:ident, [$t:ty], $($rest:tt)*) => {
+        pub struct $name<T>(pub T);
+        impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
+            fn get_range_(&self, msb: usize, lsb: usize) -> u64 {
+                let bit_len = mem::size_of::<$t>()*8;
+                let mut value = 0;
+                for i in (lsb..msb+1).rev() {
+                    value <<= 1;
+                    value |= ((self.0.as_ref()[i/bit_len] >> (i%bit_len)) & 1) as u64;
+                }
+                return value;
+            }
+
+            fn set_range_(&mut self, msb: usize, lsb: usize, value: u64) {
+                let bit_len = mem::size_of::<$t>()*8;
+                let mut value = value;
+                for i in lsb..msb+1 {
+                    self.0.as_mut()[i/bit_len] &= !(1 << (i%bit_len));
+                    self.0.as_mut()[i/bit_len] |= (value & 1) as $t << (i%bit_len);
+                    value >>= 1;
+                }
+            }
+
+            simple_bitfield_field!{u64, $($rest)*}
+        }
+    };
     ($name:ident, $t:ty, $($rest:tt)*) => {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         #[repr(C)]
