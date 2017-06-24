@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate simple_bitfield;
 
-use std::mem;
-
 simple_bitfield! {
     FooBar, u32, // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
