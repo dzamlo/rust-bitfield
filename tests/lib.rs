@@ -164,7 +164,7 @@ simple_bitfield! {
 }
 
 #[test]
-fn foo() {
+fn test_arraybitfield() {
     let mut ab = ArrayBitfiled([0; 3]);
 
     assert_eq!(0, ab.foo1());
