@@ -156,7 +156,7 @@ fn test_all_bits() {
 }
 
 simple_bitfield! {
-    ArrayBitfiled, [u8],
+    ArrayBitfield, [u8],
     foo1, set_foo1: 0, 0,
     foo2, set_foo2: 7, 0,
     foo3, set_foo3: 8, 1,
@@ -165,7 +165,7 @@ simple_bitfield! {
 
 #[test]
 fn test_arraybitfield() {
-    let mut ab = ArrayBitfiled([0; 3]);
+    let mut ab = ArrayBitfield([0; 3]);
 
     assert_eq!(0, ab.foo1());
     assert_eq!(0, ab.foo2());
