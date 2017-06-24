@@ -203,3 +203,52 @@ fn test_arraybitfield() {
     assert_eq!(0xF8, ab.foo3());
     assert_eq!(0xFFFF, ab.foo4());
 }
+
+simple_bitfield! {
+    ArrayBitfield2, [u16],
+    foo1, set_foo1: 0, 0,
+    foo2, set_foo2: 7, 0,
+    foo3, set_foo3: 8, 1,
+    foo4, set_foo4: 20, 4,
+}
+
+#[test]
+fn test_arraybitfield2() {
+    let mut ab = ArrayBitfield2([0; 2]);
+
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0, ab.foo2());
+    assert_eq!(0, ab.foo3());
+    assert_eq!(0, ab.foo4());
+
+    ab.set_foo1(1);
+    assert_eq!([1, 0], ab.0);
+    assert_eq!(1, ab.foo1());
+    assert_eq!(1, ab.foo2());
+    assert_eq!(0, ab.foo3());
+    assert_eq!(0, ab.foo4());
+
+    ab.set_foo1(0);
+    ab.set_foo2(0xFF);
+    assert_eq!([0xFF, 0], ab.0);
+    assert_eq!(1, ab.foo1());
+    assert_eq!(0xFF, ab.foo2());
+    assert_eq!(0x7F, ab.foo3());
+    assert_eq!(0x0F, ab.foo4());
+
+    ab.set_foo2(0);
+    ab.set_foo3(0xFF);
+    assert_eq!([0x1FE, 0x0], ab.0);
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0xFE, ab.foo2());
+    assert_eq!(0xFF, ab.foo3());
+    assert_eq!(0x1F, ab.foo4());
+
+    ab.set_foo3(0);
+    ab.set_foo4(0xFFFF);
+    assert_eq!([0xFFF0, 0xF], ab.0);
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0xF0, ab.foo2());
+    assert_eq!(0xF8, ab.foo3());
+    assert_eq!(0xFFFF, ab.foo4());
+}
