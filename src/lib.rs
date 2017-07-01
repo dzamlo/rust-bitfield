@@ -58,7 +58,7 @@ macro_rules! simple_bitfield_field {
 
 #[macro_export]
 macro_rules! simple_bitfield {
-    ($name:ident, [$t:ty], $($rest:tt)*) => {
+    ($name:ident, [$t:ty]; $($rest:tt)*) => {
         pub struct $name<T>(pub T);
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $crate::BitRange<u64> for $name<T> {
@@ -87,7 +87,7 @@ macro_rules! simple_bitfield {
             simple_bitfield_field!{u64, $($rest)*}
         }
     };
-    ($name:ident, $t:ty, $($rest:tt)*) => {
+    ($name:ident, $t:ty; $($rest:tt)*) => {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         #[repr(C)]
         pub struct $name(pub $t);
@@ -104,7 +104,7 @@ macro_rules! simple_bitfield {
         impl $name {
             simple_bitfield_field!{$t, $($rest)*}
          }
-    }
+    };
 }
 
 #[doc(hidden)]
