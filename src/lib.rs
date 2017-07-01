@@ -1,14 +1,14 @@
 #![no_std]
 
 #[macro_export]
-macro_rules! simple_bitfield_field {
+macro_rules! simple_bitfield_fields {
    ($t:ty,) => {};
    ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $($rest:tt)*) => {
        pub fn $setter(&mut self, value: $t) {
            use $crate::BitRange;
            self.set_bit_range($msb, $lsb, value);
        }
-       simple_bitfield_field!{$t, $($rest)*}
+       simple_bitfield_fields!{$t, $($rest)*}
    };
    ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
        #[allow(unknown_lints)]
@@ -21,14 +21,14 @@ macro_rules! simple_bitfield_field {
            let msb = lsb + width - 1;
            self.set_bit_range(msb, lsb, value);
        }
-       simple_bitfield_field!{$t, $($rest)*}
+       simple_bitfield_fields!{$t, $($rest)*}
    };
    ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $($rest:tt)*) => {
        pub fn $getter(&self) -> $t {
            use $crate::BitRange;
            self.bit_range($msb, $lsb)
        }
-       simple_bitfield_field!{$t, $($rest)*}
+       simple_bitfield_fields!{$t, $($rest)*}
    };
    ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
        #[allow(unknown_lints)]
@@ -41,17 +41,17 @@ macro_rules! simple_bitfield_field {
            let msb = lsb + width - 1;
            self.bit_range(msb, lsb)
        }
-       simple_bitfield_field!{$t, $($rest)*}
+       simple_bitfield_fields!{$t, $($rest)*}
    };
    ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr, $($rest:tt)*) => {
-       simple_bitfield_field!{$t, $getter, _: $msb, $lsb, }
-       simple_bitfield_field!{$t, _, $setter: $msb, $lsb, }
-       simple_bitfield_field!{$t, $($rest)*}
+       simple_bitfield_fields!{$t, $getter, _: $msb, $lsb, }
+       simple_bitfield_fields!{$t, _, $setter: $msb, $lsb, }
+       simple_bitfield_fields!{$t, $($rest)*}
    };
    ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
-         simple_bitfield_field!{$t, $getter, _: $msb, $lsb; $count, }
-         simple_bitfield_field!{$t, _, $setter: $msb, $lsb; $count, }
-         simple_bitfield_field!{$t, $($rest)*}
+         simple_bitfield_fields!{$t, $getter, _: $msb, $lsb; $count, }
+         simple_bitfield_fields!{$t, _, $setter: $msb, $lsb; $count, }
+         simple_bitfield_fields!{$t, $($rest)*}
    };
 }
 
@@ -84,7 +84,7 @@ macro_rules! simple_bitfield {
         }
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_field!{u64, $($rest)*}
+            simple_bitfield_fields!{u64, $($rest)*}
         }
     };
     ($name:ident, $t:ty; $($rest:tt)*) => {
@@ -102,7 +102,7 @@ macro_rules! simple_bitfield {
         }
 
         impl $name {
-            simple_bitfield_field!{$t, $($rest)*}
+            simple_bitfield_fields!{$t, $($rest)*}
          }
     };
 }
