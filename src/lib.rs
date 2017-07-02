@@ -3,14 +3,14 @@
 #[macro_export]
 macro_rules! simple_bitfield_fields {
    ($t:ty,) => {};
-   ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $($rest:tt)*) => {
+   ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr; $($rest:tt)*) => {
        pub fn $setter(&mut self, value: $t) {
            use $crate::BitRange;
            self.set_bit_range($msb, $lsb, value);
        }
        simple_bitfield_fields!{$t, $($rest)*}
    };
-   ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
+   ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $count:expr; $($rest:tt)*) => {
        #[allow(unknown_lints)]
        #[allow(eq_op)]
        pub fn $setter(&mut self, index: usize, value: $t) {
@@ -23,14 +23,14 @@ macro_rules! simple_bitfield_fields {
        }
        simple_bitfield_fields!{$t, $($rest)*}
    };
-   ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $($rest:tt)*) => {
+   ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr; $($rest:tt)*) => {
        pub fn $getter(&self) -> $t {
            use $crate::BitRange;
            self.bit_range($msb, $lsb)
        }
        simple_bitfield_fields!{$t, $($rest)*}
    };
-   ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
+   ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr; $($rest:tt)*) => {
        #[allow(unknown_lints)]
        #[allow(eq_op)]
        pub fn $getter(&self, index: usize) -> $t {
@@ -43,18 +43,17 @@ macro_rules! simple_bitfield_fields {
        }
        simple_bitfield_fields!{$t, $($rest)*}
    };
-   ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr, $($rest:tt)*) => {
-       simple_bitfield_fields!{$t, $getter, _: $msb, $lsb, }
-       simple_bitfield_fields!{$t, _, $setter: $msb, $lsb, }
+   ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr; $($rest:tt)*) => {
+       simple_bitfield_fields!{$t, $getter, _: $msb, $lsb; }
+       simple_bitfield_fields!{$t, _, $setter: $msb, $lsb; }
        simple_bitfield_fields!{$t, $($rest)*}
    };
-   ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr; $count:expr, $($rest:tt)*) => {
-         simple_bitfield_fields!{$t, $getter, _: $msb, $lsb; $count, }
-         simple_bitfield_fields!{$t, _, $setter: $msb, $lsb; $count, }
+   ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr, $count:expr; $($rest:tt)*) => {
+         simple_bitfield_fields!{$t, $getter, _: $msb, $lsb, $count; }
+         simple_bitfield_fields!{$t, _, $setter: $msb, $lsb, $count; }
          simple_bitfield_fields!{$t, $($rest)*}
    };
 }
-
 
 #[macro_export]
 macro_rules! simple_bitfield {

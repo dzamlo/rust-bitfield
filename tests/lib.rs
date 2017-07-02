@@ -4,18 +4,18 @@ extern crate simple_bitfield;
 simple_bitfield! {
     FooBar, u32; // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
-    foo1, set_foo1: 0, 0,
-    foo2, set_foo2: 31, 31,
-    foo3, set_foo3: 3, 0,
-    foo4, set_foo4: 31, 28,
+    foo1, set_foo1: 0, 0;
+    foo2, set_foo2: 31, 31;
+    foo3, set_foo3: 3, 0;
+    foo4, set_foo4: 31, 28;
     // getter name, setter name: msb of first element (included), lsb of first element; count
-    foo5, set_foo5: 0, 0; 32,
-    foo6, set_foo6: 5, 3; 3,
-    getter_only, _: 3, 1,
-    _, setter_only: 4, 2,
-    getter_only_array, _: 5, 3; 3,
-    _, setter_only_array: 6, 4; 3,
-    all_bits, set_all_bits: 31, 0,
+    foo5, set_foo5: 0, 0, 32;
+    foo6, set_foo6: 5, 3, 3;
+    getter_only, _: 3, 1;
+    _, setter_only: 4, 2;
+    getter_only_array, _: 5, 3, 3;
+    _, setter_only_array: 6, 4, 3;
+    all_bits, set_all_bits: 31, 0;
 }
 
 #[test]
@@ -157,10 +157,10 @@ fn test_all_bits() {
 
 simple_bitfield! {
     ArrayBitfield, [u8];
-    foo1, set_foo1: 0, 0,
-    foo2, set_foo2: 7, 0,
-    foo3, set_foo3: 8, 1,
-    foo4, set_foo4: 20, 4,
+    foo1, set_foo1: 0, 0;
+    foo2, set_foo2: 7, 0;
+    foo3, set_foo3: 8, 1;
+    foo4, set_foo4: 20, 4;
 }
 
 #[test]
@@ -206,10 +206,10 @@ fn test_arraybitfield() {
 
 simple_bitfield! {
     ArrayBitfield2, [u16];
-    foo1, set_foo1: 0, 0,
-    foo2, set_foo2: 7, 0,
-    foo3, set_foo3: 8, 1,
-    foo4, set_foo4: 20, 4,
+    foo1, set_foo1: 0, 0;
+    foo2, set_foo2: 7, 0;
+    foo3, set_foo3: 8, 1;
+    foo4, set_foo4: 20, 4;
 }
 
 #[test]
