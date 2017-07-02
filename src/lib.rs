@@ -112,9 +112,11 @@ pub fn size_of<T>() -> usize {
     core::mem::size_of::<T>()
 }
 
-
+/// A trait to get or set ranges of bits.
 pub trait BitRange<T> {
+    /// Get a range of bits.
     fn bit_range(&self, msb: usize, lsb: usize) -> T;
+    /// Set a range of bits.
     fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T);
 }
 
