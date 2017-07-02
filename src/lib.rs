@@ -108,9 +108,7 @@ macro_rules! simple_bitfield {
 }
 
 #[doc(hidden)]
-pub fn size_of<T>() -> usize {
-    core::mem::size_of::<T>()
-}
+pub use core::mem::size_of;
 
 /// A trait to get or set ranges of bits.
 pub trait BitRange<T> {
