@@ -5,7 +5,7 @@ simple_bitfield! {
     FooBar, u32; // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
     foo1, set_foo1: 0, 0;
-    foo2, set_foo2: 31, 31;
+    u8, foo2, set_foo2: 31, 31;
     foo3, set_foo3: 3, 0;
     foo4, set_foo4: 31, 28;
     // getter name, setter name: msb of first element (included), lsb of first element; count
