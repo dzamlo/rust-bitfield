@@ -2,7 +2,9 @@
 extern crate simple_bitfield;
 
 simple_bitfield! {
-    FooBar(u32); // newtype name, underlying type
+    #[derive(Copy, Clone)]
+    /// documentation comments also work!
+    struct FooBar(u32); // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
     foo1, set_foo1: 0, 0;
     u8;
@@ -168,8 +170,15 @@ fn test_all_bits() {
     assert_eq!(0x80000001, fb.all_bits());
 }
 
+#[test]
+fn test_is_copy() {
+    let a = FooBar(0);
+    let _b = a;
+    let _c = a;
+}
+
 simple_bitfield! {
-    ArrayBitfield([u8]);
+    struct ArrayBitfield([u8]);
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
@@ -218,7 +227,7 @@ fn test_arraybitfield() {
 }
 
 simple_bitfield! {
-    ArrayBitfield2([u16]);
+    struct ArrayBitfield2([u16]);
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
