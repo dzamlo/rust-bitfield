@@ -5,11 +5,13 @@ simple_bitfield! {
     FooBar, u32; // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
     foo1, set_foo1: 0, 0;
-    u8, foo2, set_foo2: 31, 31;
+    u8;
+    foo2, set_foo2: 31, 31;
     foo3, set_foo3: 3, 0;
-    foo4, set_foo4: 31, 28;
+    u16, foo4, set_foo4: 31, 28;
     // getter name, setter name: msb of first element (included), lsb of first element; count
     foo5, set_foo5: 0, 0, 32;
+    u32;
     foo6, set_foo6: 5, 3, 3;
     getter_only, _: 3, 1;
     _, setter_only: 4, 2;
@@ -139,6 +141,17 @@ fn test_array_field2() {
     assert_eq!(0, fb.foo6(0));
     assert_eq!(0, fb.foo6(1));
     assert_eq!(7, fb.foo6(2));
+}
+
+#[test]
+fn test_field_type() {
+    let fb = FooBar(0);
+    let _: u32 = fb.foo1();
+    let _: u8 = fb.foo2();
+    let _: u8 = fb.foo3();
+    let _: u16 = fb.foo4();
+    let _: u8 = fb.foo5(0);
+    let _: u32 = fb.foo6(0);
 }
 
 #[test]

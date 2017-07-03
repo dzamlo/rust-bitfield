@@ -54,15 +54,18 @@ macro_rules! simple_bitfield_field {
 
 #[macro_export]
 macro_rules! simple_bitfield_fields {
-   ($t:ty,) => {};
-    ($default_ty:ty, $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{$t, $getter, $setter: $($exprs),*}
-        simple_bitfield_fields!{$default_ty, $($rest)*}
+    ($t:ty;) => {};
+    ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-   ($default_ty:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-       simple_bitfield_field!{$default_ty, $getter, $setter: $($exprs),*}
-       simple_bitfield_fields!{$default_ty, $($rest)*}
-   };
+    ($default_ty:ty; $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{$t, $getter, $setter: $($exprs),*}
+        simple_bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($default_ty:ty; $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{$default_ty, $getter, $setter: $($exprs),*}
+        simple_bitfield_fields!{$default_ty; $($rest)*}
+    };
 }
 
 #[macro_export]
@@ -76,7 +79,7 @@ macro_rules! simple_bitfield {
         impl_bitrange_slice!($name, $t, u64);
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_fields!{u64, $($rest)*}
+            simple_bitfield_fields!{u64; $($rest)*}
         }
     };
     ($name:ident, $t:ty; $($rest:tt)*) => {
@@ -94,7 +97,7 @@ macro_rules! simple_bitfield {
         }
 
         impl $name {
-            simple_bitfield_fields!{$t, $($rest)*}
+            simple_bitfield_fields!{$t; $($rest)*}
          }
     };
 }
