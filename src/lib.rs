@@ -70,7 +70,7 @@ macro_rules! simple_bitfield_fields {
 
 #[macro_export]
 macro_rules! simple_bitfield_struct {
-    ($name:ident, [$t:ty]) => {
+    ($name:ident([$t:ty])) => {
         pub struct $name<T>(pub T);
 
         impl_bitrange_slice!($name, $t, u8);
@@ -78,7 +78,7 @@ macro_rules! simple_bitfield_struct {
         impl_bitrange_slice!($name, $t, u32);
         impl_bitrange_slice!($name, $t, u64);
     };
-    ($name:ident, $t:ty) => {
+    ($name:ident($t:ty)) => {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         #[repr(C)]
         pub struct $name(pub $t);
@@ -96,15 +96,15 @@ macro_rules! simple_bitfield_struct {
 
 #[macro_export]
 macro_rules! simple_bitfield {
-    ($name:ident, [$t:ty]; $($rest:tt)*) => {
-        simple_bitfield_struct!($name, [$t]);
+    ($name:ident([$t:ty]); $($rest:tt)*) => {
+        simple_bitfield_struct!($name([$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             simple_bitfield_fields!{u64; $($rest)*}
         }
     };
-    ($name:ident, $t:ty; $($rest:tt)*) => {
-        simple_bitfield_struct!($name, $t);
+    ($name:ident($t:ty); $($rest:tt)*) => {
+        simple_bitfield_struct!($name($t));
 
         impl $name {
             simple_bitfield_fields!{$t; $($rest)*}

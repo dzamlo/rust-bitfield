@@ -2,7 +2,7 @@
 extern crate simple_bitfield;
 
 simple_bitfield! {
-    FooBar, u32; // newtype name, underlying type
+    FooBar(u32); // newtype name, underlying type
     // getter name, setter name: msb (included), lsb
     foo1, set_foo1: 0, 0;
     u8;
@@ -169,7 +169,7 @@ fn test_all_bits() {
 }
 
 simple_bitfield! {
-    ArrayBitfield, [u8];
+    ArrayBitfield([u8]);
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
@@ -218,7 +218,7 @@ fn test_arraybitfield() {
 }
 
 simple_bitfield! {
-    ArrayBitfield2, [u16];
+    ArrayBitfield2([u16]);
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
