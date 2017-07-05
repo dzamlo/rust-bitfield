@@ -20,6 +20,7 @@ simple_bitfield! {
     getter_only_array, _: 5, 3, 3;
     _, setter_only_array: 6, 4, 3;
     all_bits, set_all_bits: 31, 0;
+    single_bit, set_single_bit: 3;
 }
 
 #[test]
@@ -30,16 +31,25 @@ fn test_single_bit() {
     assert_eq!(0x1, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x0, fb.foo2());
+    assert_eq!(false, fb.single_bit());
 
     fb.set_foo2(1);
     assert_eq!(0x80000001, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x1, fb.foo2());
+    assert_eq!(false, fb.single_bit());
 
     fb.set_foo1(0);
     assert_eq!(0x80000000, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
+    assert_eq!(false, fb.single_bit());
+
+    fb.set_single_bit(true);
+    assert_eq!(0x80000008, fb.0);
+    assert_eq!(0x0, fb.foo1());
+    assert_eq!(0x1, fb.foo2());
+    assert_eq!(true, fb.single_bit());
 }
 
 #[test]
