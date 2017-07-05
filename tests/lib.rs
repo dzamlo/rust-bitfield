@@ -192,7 +192,7 @@ simple_bitfield! {
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
-    foo4, set_foo4: 20, 4;
+    foo4, set_foo4: 19, 4;
 }
 
 #[test]
@@ -282,5 +282,54 @@ fn test_arraybitfield2() {
     assert_eq!(0, ab.foo1());
     assert_eq!(0xF0, ab.foo2());
     assert_eq!(0xF8, ab.foo3());
+    assert_eq!(0xFFFF, ab.foo4());
+}
+
+simple_bitfield! {
+    struct ArrayBitfieldMsb0(MSB0 [u8]);
+    foo1, set_foo1: 0, 0;
+    foo2, set_foo2: 7, 0;
+    foo3, set_foo3: 8, 1;
+    foo4, set_foo4: 19, 4;
+}
+
+#[test]
+fn test_arraybitfield_msb0() {
+    let mut ab = ArrayBitfieldMsb0([0; 3]);
+
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0, ab.foo2());
+    assert_eq!(0, ab.foo3());
+    assert_eq!(0, ab.foo4());
+
+    ab.set_foo1(1);
+    assert_eq!([0b1000_0000, 0, 0], ab.0);
+    assert_eq!(1, ab.foo1());
+    assert_eq!(0b1000_0000, ab.foo2());
+    assert_eq!(0, ab.foo3());
+    assert_eq!(0, ab.foo4());
+
+    ab.set_foo1(0);
+    ab.set_foo2(0xFF);
+    assert_eq!([0b1111_1111, 0, 0], ab.0);
+    assert_eq!(1, ab.foo1());
+    assert_eq!(0b1111_1111, ab.foo2());
+    assert_eq!(0b1111_1110, ab.foo3());
+    assert_eq!(0b1111_0000_0000_0000, ab.foo4());
+
+    ab.set_foo2(0);
+    ab.set_foo3(0xFF);
+    assert_eq!([0b01111111, 0b10000000, 0], ab.0);
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0b01111111, ab.foo2());
+    assert_eq!(0xFF, ab.foo3());
+    assert_eq!(0b1111_1000_0000_0000, ab.foo4());
+
+    ab.set_foo3(0);
+    ab.set_foo4(0xFFFF);
+    assert_eq!([0x0F, 0xFF, 0xF0], ab.0);
+    assert_eq!(0, ab.foo1());
+    assert_eq!(0x0F, ab.foo2());
+    assert_eq!(0b0001_1111, ab.foo3());
     assert_eq!(0xFFFF, ab.foo4());
 }

@@ -246,7 +246,7 @@ macro_rules! impl_bitrange_slice_msb0 {
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let mut value = value;
-                for i in lsb..msb+1 {
+                for i in (lsb..msb+1).rev() {
                     self.0.as_mut()[i/bit_len] &= !(1 << (bit_len - i%bit_len - 1));
                     self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty
                         << (bit_len - i%bit_len - 1);
