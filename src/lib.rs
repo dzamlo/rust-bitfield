@@ -24,6 +24,12 @@ macro_rules! simple_bitfield_field {
             self.set_bit_range($msb, $lsb, value);
         }
     };
+    ($t:ty, _, $setter:ident: $bit:expr) => {
+        pub fn $setter(&mut self, value: bool) {
+            use $crate::Bit;
+            self.set_bit($bit, value);
+        }
+    };
     ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr) => {
         #[allow(unknown_lints)]
         #[allow(eq_op)]
@@ -42,13 +48,15 @@ macro_rules! simple_bitfield_field {
             self.bit_range($msb, $lsb)
         }
     };
-    ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr, $count:expr) => {
-        simple_bitfield_field!($t, $getter, _: $msb, $lsb, $count);
-        simple_bitfield_field!($t, _, $setter: $msb, $lsb, $count);
+    ($t:ty, $getter:ident, _: $bit:expr) => {
+        pub fn $getter(&self) -> bool {
+            use $crate::Bit;
+            self.bit($bit)
+        }
     };
-    ($t:ty, $getter:ident, $setter:ident: $msb:expr, $lsb:expr) => {
-        simple_bitfield_field!($t, $getter, _: $msb, $lsb);
-        simple_bitfield_field!($t, _, $setter: $msb, $lsb);
+    ($t:ty, $getter:ident, $setter:ident: $($exprs:expr),*) => {
+        simple_bitfield_field!($t, $getter, _: $($exprs),*);
+        simple_bitfield_field!($t, _, $setter: $($exprs),*);
     };
 }
 
@@ -135,6 +143,24 @@ pub trait BitRange<T> {
     fn bit_range(&self, msb: usize, lsb: usize) -> T;
     /// Set a range of bits.
     fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T);
+}
+
+/// A trait to get or set a single bit.
+pub trait Bit {
+    /// Get a single bit.
+    fn bit(&self, bit: usize) -> bool;
+
+    /// Set a single bit.
+    fn set_bit(&mut self, bit: usize, value: bool);
+}
+
+impl<T: BitRange<u8>> Bit for T {
+    fn bit(&self, bit: usize) -> bool {
+        self.bit_range(bit, bit) != 0
+    }
+    fn set_bit(&mut self, bit: usize, value: bool) {
+        self.set_bit_range(bit, bit, value as u8);
+    }
 }
 
 macro_rules! impl_bitrange_for_u {

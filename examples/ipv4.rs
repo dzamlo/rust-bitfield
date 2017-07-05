@@ -11,8 +11,8 @@ simple_bitfield!{
     get_ecn, _: 15, 14;
     get_total_length, _: 31, 16;
     get_identification, _: 47, 31;
-    get_df, _: 49, 49;
-    get_mf, _: 50, 50;
+    get_df, _: 49;
+    get_mf, _: 50;
     get_fragment_offset, _: 63, 51;
     get_time_to_live, _: 71, 64;
     get_protocol, _: 79, 72;
@@ -68,8 +68,8 @@ fn main() {
     assert_eq!(header.get_version(), 4);
     assert_eq!(header.get_total_length(), 64);
     assert_eq!(header.get_identification(), 0x6927);
-    assert_eq!(header.get_df(), 1);
-    assert_eq!(header.get_mf(), 0);
+    assert!(header.get_df());
+    assert!(!header.get_mf());
     assert_eq!(header.get_fragment_offset(), 0);
     assert_eq!(header.get_protocol(), 0x11);
     //assert!(header.get_source_address() == [192, 168, 1, 42]);
