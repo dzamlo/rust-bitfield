@@ -6,10 +6,10 @@
 /// call this macro directly. Use `simple_bitfiled_fields` instead.
 #[macro_export]
 macro_rules! simple_bitfield_field {
-    ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $count:expr) => {
+    (($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $count:expr) => {
         #[allow(unknown_lints)]
         #[allow(eq_op)]
-        pub fn $setter(&mut self, index: usize, value: $t) {
+        $($vis)* fn $setter(&mut self, index: usize, value: $t) {
             use $crate::BitRange;
             debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
@@ -18,22 +18,22 @@ macro_rules! simple_bitfield_field {
             self.set_bit_range(msb, lsb, value);
         }
     };
-    ($t:ty, _, $setter:ident: $msb:expr, $lsb:expr) => {
-        pub fn $setter(&mut self, value: $t) {
+    (($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr) => {
+        $($vis)* fn $setter(&mut self, value: $t) {
             use $crate::BitRange;
             self.set_bit_range($msb, $lsb, value);
         }
     };
-    ($t:ty, _, $setter:ident: $bit:expr) => {
-        pub fn $setter(&mut self, value: bool) {
+    (($($vis:tt)*) $t:ty, _, $setter:ident: $bit:expr) => {
+        $($vis)* fn $setter(&mut self, value: bool) {
             use $crate::Bit;
             self.set_bit($bit, value);
         }
     };
-    ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr) => {
+    (($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr) => {
         #[allow(unknown_lints)]
         #[allow(eq_op)]
-        pub fn $getter(&self, index: usize) -> $t {
+        $($vis)* fn $getter(&self, index: usize) -> $t {
             use $crate::BitRange;
             debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
@@ -42,36 +42,44 @@ macro_rules! simple_bitfield_field {
             self.bit_range(msb, lsb)
         }
     };
-    ($t:ty, $getter:ident, _: $msb:expr, $lsb:expr) => {
-        pub fn $getter(&self) -> $t {
+    (($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr) => {
+        $($vis)* fn $getter(&self) -> $t {
             use $crate::BitRange;
             self.bit_range($msb, $lsb)
         }
     };
-    ($t:ty, $getter:ident, _: $bit:expr) => {
-        pub fn $getter(&self) -> bool {
+    (($($vis:tt)*) $t:ty, $getter:ident, _: $bit:expr) => {
+        $($vis)* fn $getter(&self) -> bool {
             use $crate::Bit;
             self.bit($bit)
         }
     };
-    ($t:ty, $getter:ident, $setter:ident: $($exprs:expr),*) => {
-        simple_bitfield_field!($t, $getter, _: $($exprs),*);
-        simple_bitfield_field!($t, _, $setter: $($exprs),*);
+    (($($vis:tt)*) $t:ty, $getter:ident, $setter:ident: $($exprs:expr),*) => {
+        simple_bitfield_field!(($($vis)*) $t, $getter, _: $($exprs),*);
+        simple_bitfield_field!(($($vis)*) $t, _, $setter: $($exprs),*);
     };
 }
 
 #[macro_export]
 macro_rules! simple_bitfield_fields {
     ($t:ty;) => {};
-    ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
+    ($default_ty:ty; pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{(pub) $t, $getter, $setter: $($exprs),*}
+        simple_bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($default_ty:ty; pub $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{(pub) $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{$t, $getter, $setter: $($exprs),*}
+        simple_bitfield_field!{() $t, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{$default_ty, $getter, $setter: $($exprs),*}
+        simple_bitfield_field!{() $default_ty, $getter, $setter: $($exprs),*}
+        simple_bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
 }

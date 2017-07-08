@@ -389,11 +389,48 @@ fn test_arraybitfield_msb0() {
 
 mod some_module {
     simple_bitfield! {
-        pub struct PubBitFieldInAModule(u8);
+        pub struct PubBitFieldInAModule(u32);
+        pub field1, set_field1: 1;
+        pub field2, _: 1;
+        pub _, set_field3: 1;
+        pub u16, field4, set_field4: 1;
+        pub u16, _, set_field5: 1;
+        pub u16, field6, _: 1;
+        pub field7, set_field7: 1;
+        pub field8, set_field8: 1, 1;
+        pub field9, set_field9: 1, 1, 1;
+        pub u32, field10, set_field10: 1;
+        pub u32, field11, set_field11: 1, 1;
+        pub u32, field12, set_field12: 1, 1, 1;
     }
+
 }
 
 #[test]
 fn struct_can_be_public() {
     let _ = some_module::PubBitFieldInAModule(0);
+}
+#[test]
+fn field_can_be_public() {
+    let mut a = some_module::PubBitFieldInAModule(0);
+    let _ = a.field1();
+    a.set_field1(true);
+    let _ = a.field2();
+    a.set_field3(true);
+    let _ = a.field4();
+    a.set_field4(true);
+    a.set_field5(true);
+    let _ = a.field6();
+    let _ = a.field7();
+    a.set_field7(true);
+    let _ = a.field8();
+    a.set_field8(0);
+    let _ = a.field9(0);
+    a.set_field9(0, 0);
+    let _ = a.field10();
+    a.set_field10(true);
+    let _ = a.field11();
+    a.set_field11(0);
+    let _ = a.field12(0);
+    a.set_field12(0, 0);
 }
