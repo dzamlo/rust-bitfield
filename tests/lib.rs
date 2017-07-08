@@ -153,6 +153,61 @@ fn test_array_field2() {
     assert_eq!(7, fb.foo6(2));
 }
 
+#[allow(unknown_lints)]
+#[allow(identity_op)]
+#[test]
+fn test_setter_only_array() {
+    let mut fb = FooBar(0);
+
+    fb.setter_only_array(0, 0);
+    assert_eq!(0x0, fb.0);
+
+    fb.setter_only_array(0, 0b111);
+    assert_eq!(0b111 << (4 + 0 * 2), fb.0);
+
+    fb.setter_only_array(0, 0);
+    fb.setter_only_array(1, 0b111);
+    assert_eq!(0b111 << (4 + 1 * 3), fb.0);
+
+    fb.setter_only_array(1, 0);
+    fb.setter_only_array(2, 0b111);
+    assert_eq!(0b111 << (4 + 2 * 3), fb.0);
+}
+
+#[test]
+fn test_getter_only_array() {
+    let mut fb = FooBar(0);
+
+    assert_eq!(0, fb.getter_only_array(0));
+    assert_eq!(0, fb.getter_only_array(1));
+    assert_eq!(0, fb.getter_only_array(2));
+
+    fb.0 = !(0x1FF << 3);
+    assert_eq!(0, fb.getter_only_array(0));
+    assert_eq!(0, fb.getter_only_array(1));
+    assert_eq!(0, fb.getter_only_array(2));
+
+    fb.0 = 0xF << 3;
+    assert_eq!(0b111, fb.getter_only_array(0));
+    assert_eq!(0b001, fb.getter_only_array(1));
+    assert_eq!(0, fb.getter_only_array(2));
+
+    fb.0 = 0xF << 6;
+    assert_eq!(0, fb.getter_only_array(0));
+    assert_eq!(0b111, fb.getter_only_array(1));
+    assert_eq!(0b001, fb.getter_only_array(2));
+
+    fb.0 = 0xF << 8;
+    assert_eq!(0, fb.getter_only_array(0));
+    assert_eq!(0b100, fb.getter_only_array(1));
+    assert_eq!(0b111, fb.getter_only_array(2));
+
+    fb.0 = 0b101_010_110 << 3;
+    assert_eq!(0b110, fb.getter_only_array(0));
+    assert_eq!(0b010, fb.getter_only_array(1));
+    assert_eq!(0b101, fb.getter_only_array(2));
+}
+
 #[test]
 fn test_field_type() {
     let fb = FooBar(0);
