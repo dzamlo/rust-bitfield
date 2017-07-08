@@ -79,6 +79,7 @@ macro_rules! simple_bitfield_fields {
 #[macro_export]
 macro_rules! simple_bitfield_struct {
     ($(#[$attribute:meta])* struct $name:ident([$t:ty])) => {
+        $(#[$attribute])*
         pub struct $name<T>(pub T);
 
         impl_bitrange_slice!($name, $t, u8);
@@ -87,6 +88,7 @@ macro_rules! simple_bitfield_struct {
         impl_bitrange_slice!($name, $t, u64);
     };
     ($(#[$attribute:meta])* struct $name:ident(MSB0 [$t:ty])) => {
+        $(#[$attribute])*
         pub struct $name<T>(pub T);
 
         impl_bitrange_slice_msb0!($name, $t, u8);
