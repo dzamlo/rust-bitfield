@@ -390,6 +390,7 @@ fn test_arraybitfield_msb0() {
 mod some_module {
     simple_bitfield! {
         pub struct PubBitFieldInAModule(u32);
+        /// Attribute works on pub fields
         pub field1, set_field1: 1;
         pub field2, _: 1;
         pub _, set_field3: 1;

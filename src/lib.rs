@@ -6,7 +6,9 @@
 /// call this macro directly. Use `simple_bitfiled_fields` instead.
 #[macro_export]
 macro_rules! simple_bitfield_field {
-    (($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr, $count:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr,
+     $count:expr) => {
+        $(#[$attribute])*
         #[allow(unknown_lints)]
         #[allow(eq_op)]
         $($vis)* fn $setter(&mut self, index: usize, value: $t) {
@@ -18,19 +20,23 @@ macro_rules! simple_bitfield_field {
             self.set_bit_range(msb, lsb, value);
         }
     };
-    (($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr) => {
+        $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: $t) {
             use $crate::BitRange;
             self.set_bit_range($msb, $lsb, value);
         }
     };
-    (($($vis:tt)*) $t:ty, _, $setter:ident: $bit:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, _, $setter:ident: $bit:expr) => {
+        $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: bool) {
             use $crate::Bit;
             self.set_bit($bit, value);
         }
     };
-    (($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr,
+     $count:expr) => {
+        $(#[$attribute])*
         #[allow(unknown_lints)]
         #[allow(eq_op)]
         $($vis)* fn $getter(&self, index: usize) -> $t {
@@ -42,33 +48,38 @@ macro_rules! simple_bitfield_field {
             self.bit_range(msb, lsb)
         }
     };
-    (($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $getter:ident, _: $msb:expr, $lsb:expr) => {
+        $(#[$attribute])*
         $($vis)* fn $getter(&self) -> $t {
             use $crate::BitRange;
             self.bit_range($msb, $lsb)
         }
     };
-    (($($vis:tt)*) $t:ty, $getter:ident, _: $bit:expr) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $getter:ident, _: $bit:expr) => {
+        $(#[$attribute])*
         $($vis)* fn $getter(&self) -> bool {
             use $crate::Bit;
             self.bit($bit)
         }
     };
-    (($($vis:tt)*) $t:ty, $getter:ident, $setter:ident: $($exprs:expr),*) => {
-        simple_bitfield_field!(($($vis)*) $t, $getter, _: $($exprs),*);
-        simple_bitfield_field!(($($vis)*) $t, _, $setter: $($exprs),*);
+    ($(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $getter:ident, $setter:ident:
+     $($exprs:expr),*) => {
+        simple_bitfield_field!($(#[$attribute])* ($($vis)*) $t, $getter, _: $($exprs),*);
+        simple_bitfield_field!($(#[$attribute])* ($($vis)*) $t, _, $setter: $($exprs),*);
     };
 }
 
 #[macro_export]
 macro_rules! simple_bitfield_fields {
     ($t:ty;) => {};
-    ($default_ty:ty; pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{(pub) $t, $getter, $setter: $($exprs),*}
+    ($default_ty:ty; $(#[$attribute:meta])* pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
+        simple_bitfield_field!{$(#[$attribute])* (pub) $t, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; pub $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{(pub) $default_ty, $getter, $setter: $($exprs),*}
+    ($default_ty:ty; $(#[$attribute:meta])* pub $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
+        simple_bitfield_field!{$(#[$attribute])* (pub) $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
