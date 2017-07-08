@@ -386,3 +386,14 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0b0001_1111, ab.foo3());
     assert_eq!(0xFFFF, ab.foo4());
 }
+
+mod some_module {
+    simple_bitfield! {
+        pub struct PubBitFieldInAModule(u8);
+    }
+}
+
+#[test]
+fn struct_can_be_public() {
+    let _ = some_module::PubBitFieldInAModule(0);
+}

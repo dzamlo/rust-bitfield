@@ -78,27 +78,33 @@ macro_rules! simple_bitfield_fields {
 
 #[macro_export]
 macro_rules! simple_bitfield_struct {
-    ($(#[$attribute:meta])* struct $name:ident([$t:ty])) => {
+    ($(#[$attribute:meta])* struct $name:ident($($args:tt)*)) => {
+        simple_bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
+    };
+    ($(#[$attribute:meta])* pub struct $name:ident($($args:tt)*))=> {
+        simple_bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*));
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty])) => {
         $(#[$attribute])*
-        pub struct $name<T>(pub T);
+        $($vis)* struct $name<T>(pub T);
 
         impl_bitrange_slice!($name, $t, u8);
         impl_bitrange_slice!($name, $t, u16);
         impl_bitrange_slice!($name, $t, u32);
         impl_bitrange_slice!($name, $t, u64);
     };
-    ($(#[$attribute:meta])* struct $name:ident(MSB0 [$t:ty])) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty])) => {
         $(#[$attribute])*
-        pub struct $name<T>(pub T);
+        $($vis)* struct $name<T>(pub T);
 
         impl_bitrange_slice_msb0!($name, $t, u8);
         impl_bitrange_slice_msb0!($name, $t, u16);
         impl_bitrange_slice_msb0!($name, $t, u32);
         impl_bitrange_slice_msb0!($name, $t, u64);
     };
-    ($(#[$attribute:meta])* struct $name:ident($t:ty)) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty)) => {
         $(#[$attribute])*
-        pub struct $name(pub $t);
+        $($vis)* struct $name(pub $t);
 
         impl<T> $crate::BitRange<T> for $name where $t: $crate::BitRange<T> {
             fn bit_range(&self, msb: usize, lsb: usize) -> T {
@@ -113,22 +119,28 @@ macro_rules! simple_bitfield_struct {
 
 #[macro_export]
 macro_rules! simple_bitfield {
-    ($(#[$attribute:meta])* struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* struct $name([$t]));
+    ($(#[$attribute:meta])* pub struct $($rest:tt)*) => {
+        simple_bitfield!($(#[$attribute])* (pub) struct $($rest)*);
+    };
+    ($(#[$attribute:meta])* struct $($rest:tt)*) => {
+        simple_bitfield!($(#[$attribute])* () struct $($rest)*);
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)* )struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             simple_bitfield_fields!{u64; $($rest)*}
         }
     };
-    ($(#[$attribute:meta])* struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* struct $name(MSB0 [$t]));
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
+        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             simple_bitfield_fields!{u64; $($rest)*}
         }
     };
-    ($(#[$attribute:meta])* struct $name:ident($t:ty); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* struct $name($t));
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
+        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
 
         impl $name {
             simple_bitfield_fields!{$t; $($rest)*}
