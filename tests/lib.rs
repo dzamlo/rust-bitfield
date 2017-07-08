@@ -4,14 +4,12 @@ extern crate simple_bitfield;
 simple_bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
-    struct FooBar(u32); // newtype name, underlying type
-    // getter name, setter name: msb (included), lsb
+    struct FooBar(u32);
     foo1, set_foo1: 0, 0;
     u8;
     foo2, set_foo2: 31, 31;
     foo3, set_foo3: 3, 0;
     u16, foo4, set_foo4: 31, 28;
-    // getter name, setter name: msb of first element (included), lsb of first element; count
     foo5, set_foo5: 0, 0, 32;
     u32;
     foo6, set_foo6: 5, 3, 3;
