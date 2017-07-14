@@ -72,6 +72,9 @@ macro_rules! simple_bitfield_field {
 #[macro_export]
 macro_rules! simple_bitfield_fields {
     ($t:ty;) => {};
+    ($default_ty:ty; pub $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; () pub $($rest)*}
+    };
     ($default_ty:ty; #[$attribute:meta] $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; (#[$attribute]) $($rest)*}
     };
@@ -100,9 +103,6 @@ macro_rules! simple_bitfield_fields {
     };
     ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; $($rest)*}
-    };
-    ($default_ty:ty; pub $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; () pub $($rest)*}
     };
     ($default_ty:ty; $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; () $($rest)*}
