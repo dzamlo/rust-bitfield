@@ -88,11 +88,13 @@ macro_rules! simple_bitfield_fields {
         simple_bitfield_field!{$(#[$attribute])* (pub) $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
         simple_bitfield_field!{$(#[$attribute])* () $t, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+    ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
         simple_bitfield_field!{$(#[$attribute])* () $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
