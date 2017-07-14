@@ -21,7 +21,7 @@ simple_bitfield!{
     get_protocol, _: 79, 72;
     get_header_checksum, _: 95, 79;
     u8, get_source_address, _: 103, 96, 4;
-    u8, get_destination_address, _: 135, 128, 4;
+    u32, get_destination_address, _: 159, 128;
     }
 
 impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
@@ -34,11 +34,7 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
     }
 
     fn get_destination_as_ip_addr(&self) -> Ipv4Addr {
-        let mut dst = [0; 4];
-        for (i, dst) in dst.iter_mut().enumerate() {
-            *dst = self.get_destination_address(i);
-        }
-        dst.into()
+        self.get_destination_address().into()
     }
 }
 
@@ -75,7 +71,6 @@ fn main() {
     assert!(!header.get_mf());
     assert_eq!(header.get_fragment_offset(), 0);
     assert_eq!(header.get_protocol(), 0x11);
-    //assert!(header.get_source_address() == [192, 168, 1, 42]);
     println!(
         "from {} to {}",
         header.get_source_as_ip_addr(),
