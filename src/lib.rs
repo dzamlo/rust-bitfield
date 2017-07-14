@@ -72,26 +72,38 @@ macro_rules! simple_bitfield_field {
 #[macro_export]
 macro_rules! simple_bitfield_fields {
     ($t:ty;) => {};
-    ($default_ty:ty; $(#[$attribute:meta])* pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
+    ($default_ty:ty; #[$attribute:meta] $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; (#[$attribute]) $($rest)*}
+    };
+    ($default_ty:ty; ($(#[$attributes:meta])*) #[$attribute:meta] $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; ($(#[$attributes])* #[$attribute]) $($rest)*}
+    };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
         simple_bitfield_field!{$(#[$attribute])* (pub) $t, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; $(#[$attribute:meta])* pub $getter:tt, $setter:tt:  $($exprs:expr),*;
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
         simple_bitfield_field!{$(#[$attribute])* (pub) $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{() $t, $getter, $setter: $($exprs),*}
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{$(#[$attribute])* () $t, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
-    ($default_ty:ty; $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
-        simple_bitfield_field!{() $default_ty, $getter, $setter: $($exprs),*}
+    ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*; $($rest:tt)*) => {
+        simple_bitfield_field!{$(#[$attribute])* () $default_ty, $getter, $setter: $($exprs),*}
         simple_bitfield_fields!{$default_ty; $($rest)*}
     };
     ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($default_ty:ty; pub $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; () pub $($rest)*}
+    };
+    ($default_ty:ty; $($rest:tt)*) => {
+        simple_bitfield_fields!{$default_ty; () $($rest)*}
     };
 }
 
