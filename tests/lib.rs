@@ -50,6 +50,9 @@ impl FooBar {
         u32, foo11, _: 2, 0;
         foo12, _: 2, 0;
     }
+
+    // Check if an empty simple_bitfield_fields compiles without errors.
+    simple_bitfield_fields!{}
 }
 
 #[test]
