@@ -1,6 +1,10 @@
 #[macro_use]
 extern crate simple_bitfield;
 
+// We use a constant to make sure bits positions don't need to be literals but
+// can also be constants or expressions.
+const THREE: usize = 3;
+
 simple_bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
@@ -8,7 +12,7 @@ simple_bitfield! {
     foo1, set_foo1: 0, 0;
     u8;
     foo2, set_foo2: 31, 31;
-    foo3, set_foo3: 3, 0;
+    foo3, set_foo3: THREE, 0;
     // We make sure attributes are applied to fields. If attributes were not
     // applied, the compilation would fail with a `duplicate definition`
     // error.
@@ -17,11 +21,11 @@ simple_bitfield! {
     u16, foo4, set_foo4: 31, 28;
     foo5, set_foo5: 0, 0, 32;
     u32;
-    foo6, set_foo6: 5, 3, 3;
+    foo6, set_foo6: 5, THREE, THREE;
     getter_only, _: 3, 1;
-    _, setter_only: 4, 2;
+    _, setter_only: 2*2, 2;
     getter_only_array, _: 5, 3, 3;
-    _, setter_only_array: 6, 4, 3;
+    _, setter_only_array: 2*THREE, 4, 3;
     all_bits, set_all_bits: 31, 0;
     single_bit, set_single_bit: 3;
 }
