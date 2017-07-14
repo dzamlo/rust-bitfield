@@ -26,6 +26,28 @@ simple_bitfield! {
     single_bit, set_single_bit: 3;
 }
 
+impl FooBar {
+    simple_bitfield_fields!{
+        // Boolean field don't need a type
+        foo7, _: 1;
+    }
+
+
+    simple_bitfield_fields!{
+        // If all fields have a type, we don't need to specify a default type
+        u8, foo8,_: 1, 0;
+        u32, foo9, _: 2, 0;
+    }
+
+    simple_bitfield_fields! {
+        // We can still set a default type
+        u16;
+        foo10, _: 2, 0;
+        u32, foo11, _: 2, 0;
+        foo12, _: 2, 0;
+    }
+}
+
 #[test]
 fn test_single_bit() {
     let mut fb = FooBar(0);
@@ -222,6 +244,13 @@ fn test_field_type() {
     let _: u16 = fb.foo4();
     let _: u8 = fb.foo5(0);
     let _: u32 = fb.foo6(0);
+
+    let _: bool = fb.foo7();
+    let _: u8 = fb.foo8();
+    let _: u32 = fb.foo9();
+    let _: u16 = fb.foo10();
+    let _: u32 = fb.foo11();
+    let _: u16 = fb.foo12();
 }
 
 #[test]
@@ -247,6 +276,7 @@ fn test_is_copy() {
 
 simple_bitfield! {
     struct ArrayBitfield([u8]);
+    u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
@@ -296,6 +326,7 @@ fn test_arraybitfield() {
 
 simple_bitfield! {
     struct ArrayBitfield2([u16]);
+    u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
@@ -345,6 +376,7 @@ fn test_arraybitfield2() {
 
 simple_bitfield! {
     struct ArrayBitfieldMsb0(MSB0 [u8]);
+    u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;

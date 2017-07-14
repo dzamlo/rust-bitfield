@@ -100,6 +100,9 @@ macro_rules! simple_bitfield_fields {
     ($default_ty:ty; $($rest:tt)*) => {
         simple_bitfield_fields!{$default_ty; () $($rest)*}
     };
+    ($($rest:tt)*) => {
+        simple_bitfield_fields!{SET_A_DEFAULT_TYPE_OR_SPECIFY_THE_TYPE_FOR_EACH_FIELDS; $($rest)*}
+    }
 }
 
 #[macro_export]
@@ -155,14 +158,14 @@ macro_rules! simple_bitfield {
         simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_fields!{u64; $($rest)*}
+            simple_bitfield_fields!{$($rest)*}
         }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
         simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_fields!{u64; $($rest)*}
+            simple_bitfield_fields!{$($rest)*}
         }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
