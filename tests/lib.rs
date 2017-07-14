@@ -395,9 +395,16 @@ mod some_module {
         pub field2, _: 1;
         pub _, set_field3: 1;
         pub u16, field4, set_field4: 1;
+        // We make sure attributes are applied to fields. If attributes were not
+        // applied, the compilation would fail with a `duplicate definition`
+        // error.
+        #[cfg(not(test))]
+        pub u16, field4, set_field4: 1;
         pub u16, _, set_field5: 1;
         pub u16, field6, _: 1;
         pub field7, set_field7: 1;
+        pub field8, set_field8: 1, 1;
+        #[cfg(not(test))]
         pub field8, set_field8: 1, 1;
         pub field9, set_field9: 1, 1, 1;
         pub u32, field10, set_field10: 1;
