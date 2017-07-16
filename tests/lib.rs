@@ -30,6 +30,7 @@ simple_bitfield! {
     single_bit, set_single_bit: 3;
 }
 
+
 impl FooBar {
     simple_bitfield_fields!{
         // Boolean field don't need a type
@@ -485,4 +486,99 @@ fn field_can_be_public() {
     a.set_field11(0);
     let _ = a.field12(0);
     a.set_field12(0, 0);
+}
+
+// Everything in this module is to make sure that its possible to specify types
+// in most of the possible ways.
+#[allow(dead_code)]
+mod test_types {
+    use simple_bitfield::BitRange;
+    use std;
+    use std::sync::atomic::{self, AtomicUsize};
+
+    struct Foo;
+
+    impl Foo {
+        simple_bitfield_fields!{
+            std::sync::atomic::AtomicUsize, field1, set_field1: 0, 0;
+            std::sync::atomic::AtomicUsize;
+            field2, set_field2: 0, 0;
+            ::std::sync::atomic::AtomicUsize, field3, set_field3: 0, 0;
+            ::std::sync::atomic::AtomicUsize;
+            field4, set_field4: 0, 0;
+            atomic::AtomicUsize, field5, set_field5: 0, 0;
+            atomic::AtomicUsize;
+            field6, set_field6: 0, 0;
+            AtomicUsize, field7, set_field7: 0, 0;
+            AtomicUsize;
+            field8, set_field8: 0, 0;
+            Vec<std::sync::atomic::AtomicUsize>, field9, set_field9: 0, 0;
+            Vec<std::sync::atomic::AtomicUsize>;
+            field10, set_field10: 0, 0;
+            Vec<::std::sync::atomic::AtomicUsize>, field11, set_field11: 0, 0;
+            Vec<::std::sync::atomic::AtomicUsize>;
+            field12, set_field12: 0, 0;
+            Vec<atomic::AtomicUsize>, field13, set_field13: 0, 0;
+            Vec<atomic::AtomicUsize>;
+            field14, set_field14: 0, 0;
+            Vec<AtomicUsize>, field15, set_field15: 0, 0;
+            Vec<AtomicUsize>;
+            field16, set_field16: 0, 0;
+            &str, field17, set_field17: 0, 0;
+            &str;
+            field18, set_field18: 0, 0;
+            &'static str, field19, set_field19: 0, 0;
+            &'static str;
+            field20, set_field20: 0, 0;
+        }
+    }
+
+    impl BitRange<AtomicUsize> for Foo {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> AtomicUsize {
+            AtomicUsize::new(0)
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: AtomicUsize) {}
+    }
+
+
+    impl BitRange<Vec<AtomicUsize>> for Foo {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> Vec<AtomicUsize> {
+            vec![AtomicUsize::new(0)]
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: Vec<AtomicUsize>) {}
+    }
+
+
+    impl<'a> BitRange<&'a str> for Foo {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> &'a str {
+            ""
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: &'a str) {}
+    }
+
+
+    #[test]
+    fn test_field_type() {
+        let test = Foo;
+        let _: AtomicUsize = test.field1();
+        let _: AtomicUsize = test.field2();
+        let _: AtomicUsize = test.field3();
+        let _: AtomicUsize = test.field4();
+        let _: AtomicUsize = test.field5();
+        let _: AtomicUsize = test.field6();
+        let _: AtomicUsize = test.field7();
+        let _: AtomicUsize = test.field8();
+        let _: Vec<AtomicUsize> = test.field9();
+        let _: Vec<AtomicUsize> = test.field10();
+        let _: Vec<AtomicUsize> = test.field11();
+        let _: Vec<AtomicUsize> = test.field12();
+        let _: Vec<AtomicUsize> = test.field13();
+        let _: Vec<AtomicUsize> = test.field14();
+        let _: Vec<AtomicUsize> = test.field15();
+        let _: Vec<AtomicUsize> = test.field16();
+        let _: &str = test.field17();
+        let _: &str = test.field18();
+        let _: &'static str = test.field19();
+        let _: &'static str = test.field20();
+    }
 }
