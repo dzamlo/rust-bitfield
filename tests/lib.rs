@@ -331,17 +331,18 @@ fn test_arraybitfield() {
     assert_eq!(0xFFFF, ab.foo4());
 }
 
-simple_bitfield! {
-    struct ArrayBitfield2([u16]);
-    u32;
-    foo1, set_foo1: 0, 0;
-    foo2, set_foo2: 7, 0;
-    foo3, set_foo3: 8, 1;
-    foo4, set_foo4: 20, 4;
-}
 
 #[test]
 fn test_arraybitfield2() {
+    // Check that the macro can be called from a function.
+    simple_bitfield! {
+        struct ArrayBitfield2([u16]);
+        u32;
+        foo1, set_foo1: 0, 0;
+        foo2, set_foo2: 7, 0;
+        foo3, set_foo3: 8, 1;
+        foo4, set_foo4: 20, 4;
+    }
     let mut ab = ArrayBitfield2([0; 2]);
 
     assert_eq!(0, ab.foo1());
