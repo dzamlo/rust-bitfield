@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 
 #[macro_use]
-extern crate simple_bitfield;
+extern crate bitfield;
 
 use std::net::Ipv4Addr;
 
-simple_bitfield!{
+bitfield!{
     struct IpV4Header(MSB0 [u8]);
     u32;
     get_version, _: 3, 0;

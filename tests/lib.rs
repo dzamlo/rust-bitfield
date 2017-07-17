@@ -1,11 +1,11 @@
 #[macro_use]
-extern crate simple_bitfield;
+extern crate bitfield;
 
 // We use a constant to make sure bits positions don't need to be literals but
 // can also be constants or expressions.
 const THREE: usize = 3;
 
-simple_bitfield! {
+bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
     struct FooBar(u32);
@@ -32,19 +32,19 @@ simple_bitfield! {
 
 
 impl FooBar {
-    simple_bitfield_fields!{
+    bitfield_fields!{
         // Boolean field don't need a type
         foo7, _: 1;
     }
 
 
-    simple_bitfield_fields!{
+    bitfield_fields!{
         // If all fields have a type, we don't need to specify a default type
         u8, foo8,_: 1, 0;
         u32, foo9, _: 2, 0;
     }
 
-    simple_bitfield_fields! {
+    bitfield_fields! {
         // We can still set a default type
         u16;
         foo10, _: 2, 0;
@@ -52,8 +52,8 @@ impl FooBar {
         foo12, _: 2, 0;
     }
 
-    // Check if an empty simple_bitfield_fields compiles without errors.
-    simple_bitfield_fields!{}
+    // Check if an empty bitfield_fields compiles without errors.
+    bitfield_fields!{}
 }
 
 #[test]
@@ -282,7 +282,7 @@ fn test_is_copy() {
     let _c = a;
 }
 
-simple_bitfield! {
+bitfield! {
     struct ArrayBitfield([u8]);
     u32;
     foo1, set_foo1: 0, 0;
@@ -336,7 +336,7 @@ fn test_arraybitfield() {
 #[test]
 fn test_arraybitfield2() {
     // Check that the macro can be called from a function.
-    simple_bitfield! {
+    bitfield! {
         struct ArrayBitfield2([u16]);
         u32;
         foo1, set_foo1: 0, 0;
@@ -383,7 +383,7 @@ fn test_arraybitfield2() {
     assert_eq!(0xFFFF, ab.foo4());
 }
 
-simple_bitfield! {
+bitfield! {
     struct ArrayBitfieldMsb0(MSB0 [u8]);
     u32;
     foo1, set_foo1: 0, 0;
@@ -434,7 +434,7 @@ fn test_arraybitfield_msb0() {
 }
 
 mod some_module {
-    simple_bitfield! {
+    bitfield! {
         pub struct PubBitFieldInAModule(u32);
         /// Attribute works on pub fields
         pub field1, set_field1: 1;
@@ -492,14 +492,14 @@ fn field_can_be_public() {
 // in most of the possible ways.
 #[allow(dead_code)]
 mod test_types {
-    use simple_bitfield::BitRange;
+    use bitfield::BitRange;
     use std;
     use std::sync::atomic::{self, AtomicUsize};
 
     struct Foo;
 
     impl Foo {
-        simple_bitfield_fields!{
+        bitfield_fields!{
             std::sync::atomic::AtomicUsize, field1, set_field1: 0, 0;
             std::sync::atomic::AtomicUsize;
             field2, set_field2: 0, 0;

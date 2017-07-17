@@ -1,15 +1,15 @@
 #[macro_use]
-extern crate simple_bitfield;
+extern crate bitfield;
 
-use simple_bitfield::Bit;
-use simple_bitfield::BitRange;
+use bitfield::Bit;
+use bitfield::BitRange;
 
-simple_bitfield!{
+bitfield!{
     struct BitsLocations([u8]);
 }
 
 
-simple_bitfield!{
+bitfield!{
     struct BitsLocationsMsb0(MSB0 [u8]);
 }
 

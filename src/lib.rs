@@ -1,6 +1,6 @@
 #![no_std]
 #[macro_export]
-macro_rules! simple_bitfield_fields {
+macro_rules! bitfield_fields {
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr,
      $count:expr) => {
         $(#[$attribute])*
@@ -59,59 +59,59 @@ macro_rules! simple_bitfield_fields {
     };
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $getter:ident, $setter:ident:
      $($exprs:expr),*) => {
-        simple_bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $getter, _: $($exprs),*);
-        simple_bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, _, $setter: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $getter, _: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, _, $setter: $($exprs),*);
     };
     ($t:ty;) => {};
     ($default_ty:ty; pub $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; () pub $($rest)*}
+        bitfield_fields!{$default_ty; () pub $($rest)*}
     };
     ($default_ty:ty; #[$attribute:meta] $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; (#[$attribute]) $($rest)*}
+        bitfield_fields!{$default_ty; (#[$attribute]) $($rest)*}
     };
     ($default_ty:ty; ($(#[$attributes:meta])*) #[$attribute:meta] $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; ($(#[$attributes])* #[$attribute]) $($rest)*}
+        bitfield_fields!{$default_ty; ($(#[$attributes])* #[$attribute]) $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        simple_bitfield_fields!{@field $(#[$attribute])* (pub) $t, $getter, $setter: $($exprs),*}
-        simple_bitfield_fields!{$default_ty; $($rest)*}
+        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        simple_bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $getter, $setter:
                                 $($exprs),*}
-        simple_bitfield_fields!{$default_ty; $($rest)*}
+        bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        simple_bitfield_fields!{@field $(#[$attribute])* () $t, $getter, $setter: $($exprs),*}
-        simple_bitfield_fields!{$default_ty; $($rest)*}
+        bitfield_fields!{@field $(#[$attribute])* () $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        simple_bitfield_fields!{@field $(#[$attribute])* () $default_ty, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $getter, $setter:
                                 $($exprs),*}
-        simple_bitfield_fields!{$default_ty; $($rest)*}
+        bitfield_fields!{$default_ty; $($rest)*}
     };
     ($previous_default_ty:ty; $default_ty:ty; $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; $($rest)*}
+        bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; $($rest:tt)*) => {
-        simple_bitfield_fields!{$default_ty; () $($rest)*}
+        bitfield_fields!{$default_ty; () $($rest)*}
     };
     ($($rest:tt)*) => {
-        simple_bitfield_fields!{SET_A_DEFAULT_TYPE_OR_SPECIFY_THE_TYPE_FOR_EACH_FIELDS; $($rest)*}
+        bitfield_fields!{SET_A_DEFAULT_TYPE_OR_SPECIFY_THE_TYPE_FOR_EACH_FIELDS; $($rest)*}
     }
 }
 
 #[macro_export]
-macro_rules! simple_bitfield_struct {
+macro_rules! bitfield_struct {
     ($(#[$attribute:meta])* struct $name:ident($($args:tt)*)) => {
-        simple_bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
+        bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
     };
     ($(#[$attribute:meta])* pub struct $name:ident($($args:tt)*))=> {
-        simple_bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*));
+        bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*));
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty])) => {
         $(#[$attribute])*
@@ -147,32 +147,32 @@ macro_rules! simple_bitfield_struct {
 }
 
 #[macro_export]
-macro_rules! simple_bitfield {
+macro_rules! bitfield {
     ($(#[$attribute:meta])* pub struct $($rest:tt)*) => {
-        simple_bitfield!($(#[$attribute])* (pub) struct $($rest)*);
+        bitfield!($(#[$attribute])* (pub) struct $($rest)*);
     };
     ($(#[$attribute:meta])* struct $($rest:tt)*) => {
-        simple_bitfield!($(#[$attribute])* () struct $($rest)*);
+        bitfield!($(#[$attribute])* () struct $($rest)*);
     };
     ($(#[$attribute:meta])* ($($vis:tt)* )struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_fields!{$($rest)*}
+            bitfield_fields!{$($rest)*}
         }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
-            simple_bitfield_fields!{$($rest)*}
+            bitfield_fields!{$($rest)*}
         }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
-        simple_bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
 
         impl $name {
-            simple_bitfield_fields!{$t; $($rest)*}
+            bitfield_fields!{$t; $($rest)*}
          }
     };
 }
