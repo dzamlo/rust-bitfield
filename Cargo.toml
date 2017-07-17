@@ -2,5 +2,6 @@
 name = "simple_bitfield"
 version = "0.1.0"
 authors = ["Loïc Damien <loic.damien@dzamlo.ch>"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
