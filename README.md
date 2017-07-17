@@ -1,6 +1,11 @@
 rust-bitfield
 =============
 
+This project provides macros to generate bitfield-like struct.
+
+This a complete rewrite of the `bitfield` crate.
+You can find the previous version in the [rust-bitfield-legacy](https://github.com/dzamlo/rust-bitfield-legacy) repository. This version works on the stable version of rustc and use a different syntax with different possibility.
+
 ## License
 
 Licensed under either of
