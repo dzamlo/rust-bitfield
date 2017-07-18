@@ -22,7 +22,7 @@ bitfield!{
     get_header_checksum, _: 95, 79;
     u8, get_source_address, _: 103, 96, 4;
     u32, get_destination_address, _: 159, 128;
-    }
+}
 
 impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
     fn get_source_as_ip_addr(&self) -> Ipv4Addr {
