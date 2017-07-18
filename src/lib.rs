@@ -107,6 +107,56 @@ macro_rules! bitfield_fields {
 
 #[macro_export]
 macro_rules! bitfield_struct {
+    (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
+        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
+            for $name<T> {
+                fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
+                    let bit_len = $crate::size_of::<$slice_ty>()*8;
+                    let mut value = 0;
+                    for i in (lsb..msb+1).rev() {
+                        value <<= 1;
+                        value |= ((self.0.as_ref()[i/bit_len] >> (i%bit_len)) & 1) as $bitrange_ty;
+                    }
+                    value
+                }
+
+                fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
+                    let bit_len = $crate::size_of::<$slice_ty>()*8;
+                    let mut value = value;
+                    for i in lsb..msb+1 {
+                        self.0.as_mut()[i/bit_len] &= !(1 << (i%bit_len));
+                        self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty << (i%bit_len);
+                        value >>= 1;
+                    }
+                }
+            }
+    };
+    (@impl_bitrange_slice_msb0 $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
+        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
+            for $name<T> {
+            fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
+                let bit_len = $crate::size_of::<$slice_ty>()*8;
+                let mut value = 0;
+                for i in lsb..msb+1 {
+                    value <<= 1;
+                    value |= ((self.0.as_ref()[i/bit_len] >> (bit_len - i%bit_len - 1)) & 1)
+                        as $bitrange_ty;
+                }
+                value
+            }
+
+            fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
+                let bit_len = $crate::size_of::<$slice_ty>()*8;
+                let mut value = value;
+                for i in (lsb..msb+1).rev() {
+                    self.0.as_mut()[i/bit_len] &= !(1 << (bit_len - i%bit_len - 1));
+                    self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty
+                        << (bit_len - i%bit_len - 1);
+                    value >>= 1;
+                }
+            }
+        }
+    };
     ($(#[$attribute:meta])* struct $name:ident($($args:tt)*)) => {
         bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
     };
@@ -117,19 +167,19 @@ macro_rules! bitfield_struct {
         $(#[$attribute])*
         $($vis)* struct $name<T>(pub T);
 
-        impl_bitrange_slice!($name, $t, u8);
-        impl_bitrange_slice!($name, $t, u16);
-        impl_bitrange_slice!($name, $t, u32);
-        impl_bitrange_slice!($name, $t, u64);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, u8);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, u16);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, u32);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, u64);
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty])) => {
         $(#[$attribute])*
         $($vis)* struct $name<T>(pub T);
 
-        impl_bitrange_slice_msb0!($name, $t, u8);
-        impl_bitrange_slice_msb0!($name, $t, u16);
-        impl_bitrange_slice_msb0!($name, $t, u32);
-        impl_bitrange_slice_msb0!($name, $t, u64);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u8);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u16);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u32);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u64);
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty)) => {
         $(#[$attribute])*
@@ -239,63 +289,3 @@ impl_bitrange_for_u!{u64, u8}
 impl_bitrange_for_u!{u64, u16}
 impl_bitrange_for_u!{u64, u32}
 impl_bitrange_for_u!{u64, u64}
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! impl_bitrange_slice {
-    ($name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
-        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
-            for $name<T> {
-            fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
-                let bit_len = $crate::size_of::<$slice_ty>()*8;
-                let mut value = 0;
-                for i in (lsb..msb+1).rev() {
-                    value <<= 1;
-                    value |= ((self.0.as_ref()[i/bit_len] >> (i%bit_len)) & 1) as $bitrange_ty;
-                }
-                value
-            }
-
-            fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
-                let bit_len = $crate::size_of::<$slice_ty>()*8;
-                let mut value = value;
-                for i in lsb..msb+1 {
-                    self.0.as_mut()[i/bit_len] &= !(1 << (i%bit_len));
-                    self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty << (i%bit_len);
-                    value >>= 1;
-                }
-            }
-        }
-    }
-}
-
-#[doc(hidden)]
-#[macro_export]
-macro_rules! impl_bitrange_slice_msb0 {
-    ($name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
-        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
-            for $name<T> {
-            fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
-                let bit_len = $crate::size_of::<$slice_ty>()*8;
-                let mut value = 0;
-                for i in lsb..msb+1 {
-                    value <<= 1;
-                    value |= ((self.0.as_ref()[i/bit_len] >> (bit_len - i%bit_len - 1)) & 1)
-                        as $bitrange_ty;
-                }
-                value
-            }
-
-            fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
-                let bit_len = $crate::size_of::<$slice_ty>()*8;
-                let mut value = value;
-                for i in (lsb..msb+1).rev() {
-                    self.0.as_mut()[i/bit_len] &= !(1 << (bit_len - i%bit_len - 1));
-                    self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty
-                        << (bit_len - i%bit_len - 1);
-                    value >>= 1;
-                }
-            }
-        }
-    }
-}
