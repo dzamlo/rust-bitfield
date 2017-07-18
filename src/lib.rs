@@ -1,4 +1,66 @@
 #![no_std]
+#![deny(missing_docs,unused_extern_crates, unused_import_braces, unused_qualifications )]
+
+//!  This crate provides macros to generate bitfield-like struct.
+//!
+//!  See the documentation of the macros for how to use them.
+//!
+//!  Examples and tests are also a great way to understand how to use these macros.
+
+/// Declares the fields of struct.
+///
+/// This macro will generate the methods to access the fields of a bitfield. It must be called
+/// from an `impl` block for a type that implements the `BitRange` and/or the `Bit` traits
+/// (which traits are required depending on what type of fields are used).
+///
+/// The syntax of this macro is composed of declarations ended by semicolons. There are two types
+/// of delcarations: default type, and fields.
+///
+/// A default type is just a type followed by a semicolon. This will affect all the following field
+/// declarations.
+///
+/// A field declaration is composed of the following:
+///
+/// * Optional attributes (`#[...]`), documentation comments (`///`) are attributes;
+/// * An optional pub keyword to make the methods public
+/// * An optional type
+/// * The getter and setter idents, separated by a comma
+/// * A colon
+/// * One to three expressions of type `usize`
+///
+/// The attributes and pub will be applied to the two methods generated.
+///
+/// The getter and setter idents can be `_` to not generate one of the two. For example, if the
+/// setter is `_`, the field will be read-only.
+///
+/// The expressions at the end are the bit positions. Their meaning depends on the number of
+/// expressions:
+///
+///  * One expression: the field is a single bit. The type is ignored and `bool` is used. The trait
+///    `Bit` is used.
+///  * Two expressions: `msb, lsb`, the field is composed of the bits from `msb` to `lsb`, included.
+///  * Three expressions: `msb, lsb, count`, the field is an array. The first element is composed of
+///    the bits from `msb` to `lsb`. The following elements are consecutive bits range of the same
+///    size.
+///
+/// # Example
+///
+/// ```rust
+/// # #[macro_use] extern crate bitfield;
+/// # fn main() {}
+/// # bitfield_struct!{struct FooBar(u64)}
+/// # impl FooBar {
+/// bitfield_fields!{
+///     // The default type will be `u64
+///     u64;
+///     // filed1 is read-write, public, the methods are inline
+///     #[inline]
+///     pub field1, set_field1: 10, 0;
+///     // `field2` is  read-only, private, and of type bool.
+///     field2, _ : 0;
+/// }
+/// # }
+/// ```
 #[macro_export]
 macro_rules! bitfield_fields {
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, _, $setter:ident: $msb:expr, $lsb:expr,
@@ -105,6 +167,40 @@ macro_rules! bitfield_fields {
     }
 }
 
+/// Declares a struct that implements `BitRange`,
+///
+/// This macro will generate a tuple struct (or "newtype") that implements the `BitRange` trait and
+/// by extension the `Bit` trait.
+///
+/// The syntax is more or less the same as declaring a "newtype", including the attributes,
+/// documentation comments and pub keyword.
+///
+/// The difference with a normal "newtype" is the type in parentheses. If the type is `[t]` (where
+/// `t` is any of the unsigned integer type), the "newtype" will be generic and implement
+/// `BitRange` for `T: AsMut<[t]> + AsRef<[t]>` (for example a slice, an array or a `Vec`). You can
+/// also use `MSB0 [t]`. The difference will be the positions of the bit. You can use the
+/// `bits_positions` example to see where each bits is. If the type is neither of this two, the
+/// "newtype" will wrap a value of the specified type and implements `BitRange` the same ways as
+/// the wrapped type.
+///
+/// # Examples
+///
+/// ```rust
+/// # #[macro_use] extern crate bitfield;
+/// # fn main() {}
+/// bitfield_struct!{struct BitField1(u32)}
+///
+/// bitfield_struct!{
+///     /// The documentation for this type
+///     #[derive(Copy, Clone)]
+///     pub struct BitField2(u64)
+/// }
+///
+/// bitfield_struct!{struct BitField3([u8])}
+///
+/// bitfield_struct!{struct BitField4(MSB0 [u8])}
+/// ```
+///
 #[macro_export]
 macro_rules! bitfield_struct {
     (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
@@ -196,6 +292,29 @@ macro_rules! bitfield_struct {
     };
 }
 
+/// Combines `bitfield_struct` and `bitfield_fields`.
+///
+/// The syntax of this macro is the syntax of `bitfield_struct`, a semicolon, and then the syntax
+/// of `bitfield_fields`.
+///
+/// The difference with calling those two macros separately is that `bitfield_fields` is called
+/// from an appropriate `impl` block. If you use the non-slice form of `bitfield_struct`, the
+/// default type for `bitfield_fields` will be set to the wrapped fields.
+///
+/// See the documentation of these two macros more information on their respective syntax.
+///
+/// # Example
+///
+/// ```rust
+/// # #[macro_use] extern crate bitfield;
+/// # fn main() {}
+/// bitfield!{
+///   pub struct BitField1(u16);
+///   // The fields default to u16
+///   field1, set_field1: 10, 0;
+///   pub field2, _ : 12, 3;
+/// }
+/// ```
 #[macro_export]
 macro_rules! bitfield {
     ($(#[$attribute:meta])* pub struct $($rest:tt)*) => {
@@ -239,6 +358,8 @@ pub trait BitRange<T> {
 }
 
 /// A trait to get or set a single bit.
+///
+/// This trait is implemented for all type that implement `BitRange<u8>`.
 pub trait Bit {
     /// Get a single bit.
     fn bit(&self, bit: usize) -> bool;
