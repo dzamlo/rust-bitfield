@@ -376,11 +376,14 @@ macro_rules! bitfield_struct {
 /// The syntax of this macro is the syntax of `bitfield_struct`, a semicolon, and then the syntax
 /// of `bitfield_fields`.
 ///
-/// The difference with calling those two macros separately is that `bitfield_fields` is called
+/// If you put `impl Debug;` after the first semicolon, an implementation of `fmt::Debug` will be
+/// generated with the `bitfield_debug` macro.
+///
+/// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_struct`, the
 /// default type for `bitfield_fields` will be set to the wrapped fields.
 ///
-/// See the documentation of these two macros more information on their respective syntax.
+/// See the documentation of these macros more information on their respective syntax.
 ///
 /// # Example
 ///
@@ -389,6 +392,7 @@ macro_rules! bitfield_struct {
 /// # fn main() {}
 /// bitfield!{
 ///   pub struct BitField1(u16);
+///   impl Debug;
 ///   // The fields default to u16
 ///   field1, set_field1: 10, 0;
 ///   pub field2, _ : 12, 3;
@@ -402,34 +406,45 @@ macro_rules! bitfield {
     ($(#[$attribute:meta])* struct $($rest:tt)*) => {
         bitfield!($(#[$attribute])* () struct $($rest)*);
     };
-    ($(#[$attribute:meta])* ($($vis:tt)* )struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
-
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); impl Debug; $($rest:tt)*)
+        => {
         impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
             bitfield_debug!{struct $name; $($rest)*}
         }
 
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); $($rest)*}
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
+
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
         }
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); impl Debug;
+     $($rest:tt)*) => {
+        impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name(MSB0 [$t]); $($rest)*}
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
         bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
 
-        impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
-            bitfield_debug!{struct $name; $($rest)*}
-        }
-
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
         }
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
-
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); impl Debug; $($rest:tt)*) => {
         impl $crate::fmt::Debug for $name {
             bitfield_debug!{struct $name; $($rest)*}
         }
+
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); $($rest)*}
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
 
         impl $name {
             bitfield_fields!{$t; $($rest)*}

@@ -9,6 +9,7 @@ bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
     struct FooBar(u32);
+    impl Debug;
     foo1, set_foo1: 0, 0;
     u8;
     foo2, set_foo2: 31, 31;
@@ -349,6 +350,7 @@ fn test_arraybitfield2() {
     // Check that the macro can be called from a function.
     bitfield! {
         struct ArrayBitfield2([u16]);
+        impl Debug;
         u32;
         foo1, set_foo1: 0, 0;
         foo2, set_foo2: 7, 0;
@@ -396,6 +398,7 @@ fn test_arraybitfield2() {
 
 bitfield! {
     struct ArrayBitfieldMsb0(MSB0 [u8]);
+    impl Debug;
     u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
@@ -447,6 +450,7 @@ fn test_arraybitfield_msb0() {
 mod some_module {
     bitfield! {
         pub struct PubBitFieldInAModule(u32);
+        impl Debug;
         /// Attribute works on pub fields
         pub field1, set_field1: 1;
         pub field2, _: 1;

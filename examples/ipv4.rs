@@ -7,6 +7,7 @@ use std::net::Ipv4Addr;
 
 bitfield!{
     struct IpV4Header(MSB0 [u8]);
+    impl Debug;
     u32;
     get_version, _: 3, 0;
     get_ihl, _: 7, 4;
