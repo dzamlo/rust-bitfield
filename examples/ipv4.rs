@@ -76,4 +76,6 @@ fn main() {
         header.get_source_as_ip_addr(),
         header.get_destination_as_ip_addr()
     );
+
+    println!("{:#?}", header);
 }

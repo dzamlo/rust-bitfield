@@ -167,6 +167,85 @@ macro_rules! bitfield_fields {
     }
 }
 
+/// Generates a `fmt::Debug` implementation.
+///
+/// This macros must be called from a `impl Debug for ...` block. It will generate the `fmt` method.
+///
+/// In most of the case, you will not directly call this macros, but use `bitfield`.
+///
+/// The syntax is `struct TheNameOfTheStruct` folowowed by the syntax of `bitfield_fields`.
+///
+/// The write-only fields are ignored.
+///
+/// # Example
+///
+/// ```rust
+/// # #[macro_use] extern crate bitfield;
+/// bitfield_struct!{struct FooBar(u32)}
+/// impl FooBar{
+///     bitfield_fields!{
+///        u32;
+///        field1, _: 7, 0;
+///        field2, _: 31, 24;
+///     }
+/// }
+///
+/// impl std::fmt::Debug for FooBar {
+///     bitfield_debug!{
+///        struct FooBar;
+///        field1, _: 7, 0;
+///        field2, _: 31, 24;
+///     }
+/// }
+///
+/// fn main() {
+///     let foobar = FooBar(0x11223344);
+///     println!("{:?}", foobar);
+
+/// }
+/// ```
+#[macro_export]
+macro_rules! bitfield_debug {
+    (struct $name:ident; $($rest:tt)*) => {
+        fn fmt(&self, f: &mut $crate::fmt::Formatter) -> $crate::fmt::Result {
+            let mut debug_struct = f.debug_struct(stringify!($name));
+            debug_struct.field(".0", &self.0);
+            bitfield_debug!{debug_struct, self, $($rest)*}
+            debug_struct.finish()
+        }
+    };
+    ($debug_struct:ident, $self:ident, #[$attribute:meta] $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, pub $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, _, $setter:tt: $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, $type:ty; $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $msb:expr, $lsb:expr, $count:expr;
+     $($rest:tt)*) => {
+        let mut array = [$self.$getter(0); $count];
+        for (i, e) in (&mut array).into_iter().enumerate() {
+            *e = $self.$getter(i);
+        }
+        $debug_struct.field(stringify!($getter), &array);
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $($exprs:expr),*; $($rest:tt)*)
+        => {
+        $debug_struct.field(stringify!($getter), &$self.$getter());
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, $type:ty, $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, ) => {};
+}
+
 /// Declares a struct that implements `BitRange`,
 ///
 /// This macro will generate a tuple struct (or "newtype") that implements the `BitRange` trait and
@@ -326,12 +405,20 @@ macro_rules! bitfield {
     ($(#[$attribute:meta])* ($($vis:tt)* )struct $name:ident([$t:ty]); $($rest:tt)*) => {
         bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
 
+        impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
         }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
         bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
+
+        impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
@@ -340,12 +427,19 @@ macro_rules! bitfield {
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
         bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
 
+        impl $crate::fmt::Debug for $name {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+
         impl $name {
             bitfield_fields!{$t; $($rest)*}
          }
     };
 }
 
+
+#[doc(hidden)]
+pub use core::fmt;
 #[doc(hidden)]
 pub use core::mem::size_of;
 

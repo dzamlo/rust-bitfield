@@ -282,6 +282,17 @@ fn test_is_copy() {
     let _c = a;
 }
 
+#[test]
+fn test_debug() {
+    let fb = FooBar(1234567890);
+    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0\
+                    , 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0\
+                    , 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1]\
+                    , all_bits: 1234567890, single_bit: false }";
+    assert_eq!(expected, format!("{:?}", fb))
+
+}
+
 bitfield! {
     struct ArrayBitfield([u8]);
     u32;
