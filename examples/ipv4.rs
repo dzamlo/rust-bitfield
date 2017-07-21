@@ -22,7 +22,7 @@ bitfield!{
     get_protocol, _: 79, 72;
     get_header_checksum, _: 95, 79;
     u8, get_source_address, _: 103, 96, 4;
-    u32, get_destination_address, _: 159, 128;
+    u32, into Ipv4Addr, get_destination_address, _: 159, 128;
 }
 
 impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
@@ -32,10 +32,6 @@ impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
             *src = self.get_source_address(i);
         }
         src.into()
-    }
-
-    fn get_destination_as_ip_addr(&self) -> Ipv4Addr {
-        self.get_destination_address().into()
     }
 }
 
@@ -75,7 +71,7 @@ fn main() {
     println!(
         "from {} to {}",
         header.get_source_as_ip_addr(),
-        header.get_destination_as_ip_addr()
+        header.get_destination_address()
     );
 
     println!("{:#?}", header);

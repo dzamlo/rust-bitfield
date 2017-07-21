@@ -5,6 +5,14 @@ extern crate bitfield;
 // can also be constants or expressions.
 const THREE: usize = 3;
 
+#[derive(Copy, Clone, Debug)]
+pub struct Foo(u16);
+impl From<u8> for Foo {
+    fn from(value: u8) -> Foo {
+        Foo(value as u16)
+    }
+}
+
 bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
@@ -29,6 +37,18 @@ bitfield! {
     _, setter_only_array: 2*THREE, 4, 3;
     all_bits, set_all_bits: 31, 0;
     single_bit, set_single_bit: 3;
+    #[allow(dead_code)]
+    u8, into Foo, into_foo1, set_into_foo1: 31, 31;
+    #[allow(dead_code)]
+    pub u8, into Foo, into_foo2, set_into_foo2: 31, 31;
+    u8;
+    #[allow(dead_code)]
+    into Foo, into_foo3, set_into_foo3: 31, 31;
+    #[allow(dead_code)]
+    pub into Foo, into_foo4, set_into_foo4: 31, 31;
+    #[allow(dead_code)]
+    into Foo, _, set_into_foo5: 31, 31;
+    into Foo, into_foo6, _: 29, 29, 3;
 }
 
 
@@ -260,6 +280,12 @@ fn test_field_type() {
     let _: u16 = fb.foo10();
     let _: u32 = fb.foo11();
     let _: u16 = fb.foo12();
+
+    let _: Foo = fb.into_foo1();
+    let _: Foo = fb.into_foo2();
+    let _: Foo = fb.into_foo3();
+    let _: Foo = fb.into_foo4();
+    let _: Foo = fb.into_foo6(0);
 }
 
 #[test]
@@ -289,7 +315,8 @@ fn test_debug() {
     let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0\
                     , 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0\
                     , 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1]\
-                    , all_bits: 1234567890, single_bit: false }";
+                    , all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0)\
+                    , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)] }";
     assert_eq!(expected, format!("{:?}", fb))
 
 }
