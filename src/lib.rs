@@ -1,5 +1,5 @@
 #![no_std]
-#![deny(missing_docs,unused_extern_crates, unused_import_braces, unused_qualifications )]
+#![deny(missing_docs, unused_extern_crates, unused_import_braces, unused_qualifications)]
 
 //!  This crate provides macros to generate bitfield-like struct.
 //!
