@@ -9,7 +9,7 @@ const THREE: usize = 3;
 pub struct Foo(u16);
 impl From<u8> for Foo {
     fn from(value: u8) -> Foo {
-        Foo(value as u16)
+        Foo(u16::from(value))
     }
 }
 
@@ -88,19 +88,19 @@ fn test_single_bit() {
     assert_eq!(false, fb.single_bit());
 
     fb.set_foo2(1);
-    assert_eq!(0x80000001, fb.0);
+    assert_eq!(0x8000_0001, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(false, fb.single_bit());
 
     fb.set_foo1(0);
-    assert_eq!(0x80000000, fb.0);
+    assert_eq!(0x8000_0000, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(false, fb.single_bit());
 
     fb.set_single_bit(true);
-    assert_eq!(0x80000008, fb.0);
+    assert_eq!(0x8000_0008, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(true, fb.single_bit());
@@ -119,7 +119,6 @@ fn test_single_bit_plus_garbage() {
     assert_eq!(0x1, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x0, fb.foo2());
-
 }
 
 #[test]
@@ -132,17 +131,17 @@ fn test_multiple_bit() {
     assert_eq!(0x0, fb.foo4());
 
     fb.set_foo4(0x0F);
-    assert_eq!(0xF000000F, fb.0);
+    assert_eq!(0xF000_000F, fb.0);
     assert_eq!(0xF, fb.foo3());
     assert_eq!(0xF, fb.foo4());
 
     fb.set_foo3(0);
-    assert_eq!(0xF0000000, fb.0);
+    assert_eq!(0xF000_0000, fb.0);
     assert_eq!(0x0, fb.foo3());
     assert_eq!(0xF, fb.foo4());
 
     fb.set_foo3(0xA);
-    assert_eq!(0xF000000A, fb.0);
+    assert_eq!(0xF000_000A, fb.0);
     assert_eq!(0xA, fb.foo3());
     assert_eq!(0xF, fb.foo4());
 }
@@ -170,7 +169,7 @@ fn test_array_field1() {
     fb.set_foo5(0, 1);
     fb.set_foo5(6, 1);
     fb.set_foo5(31, 1);
-    assert_eq!(0x80000041, fb.0);
+    assert_eq!(0x8000_0041, fb.0);
     assert_eq!(1, fb.foo5(0));
     assert_eq!(1, fb.foo5(6));
     assert_eq!(1, fb.foo5(31));
@@ -298,8 +297,8 @@ fn test_all_bits() {
     assert_eq!(!0u32, fb.0);
     assert_eq!(!0u32, fb.all_bits());
 
-    fb.0 = 0x80000001;
-    assert_eq!(0x80000001, fb.all_bits());
+    fb.0 = 0x8000_0001;
+    assert_eq!(0x8000_0001, fb.all_bits());
 }
 
 #[test]
@@ -311,14 +310,13 @@ fn test_is_copy() {
 
 #[test]
 fn test_debug() {
-    let fb = FooBar(1234567890);
+    let fb = FooBar(1_234_567_890);
     let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0\
                     , 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0\
                     , 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1]\
                     , all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0)\
                     , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)] }";
     assert_eq!(expected, format!("{:?}", fb))
-
 }
 
 bitfield! {
@@ -459,9 +457,9 @@ fn test_arraybitfield_msb0() {
 
     ab.set_foo2(0);
     ab.set_foo3(0xFF);
-    assert_eq!([0b01111111, 0b10000000, 0], ab.0);
+    assert_eq!([0b0111_1111, 0b1000_0000, 0], ab.0);
     assert_eq!(0, ab.foo1());
-    assert_eq!(0b01111111, ab.foo2());
+    assert_eq!(0b0111_1111, ab.foo2());
     assert_eq!(0xFF, ab.foo3());
     assert_eq!(0b1111_1000_0000_0000, ab.foo4());
 

@@ -11,7 +11,7 @@ toolchain = ["stable", "beta", "nightly", "1.19.0"]
 
 [[tests]]
 name = "cargo-clippy"
-command = ["rustup", "run", "nightly", "cargo", "clippy", "--frozen", "--", "-D", "clippy"]
+command = ["cargo", "+nightly", "clippy", "--frozen", "--", "-D", "clippy"]
 
 [[tests.env]]
 name = "CARGO_TARGET_DIR"

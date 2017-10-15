@@ -16,7 +16,6 @@ bitfield!{
 fn println_slice_bits(slice: &[u8]) {
     if slice.is_empty() {
         println!("[]");
-
     } else {
         print!("[{:08b}", slice[0]);
 
@@ -30,7 +29,6 @@ fn println_slice_bits(slice: &[u8]) {
 
 
 fn main() {
-
     let mut bits_locations = BitsLocations([0; 3]);
     let mut bits_locations_msb0 = BitsLocationsMsb0([0; 3]);
 
