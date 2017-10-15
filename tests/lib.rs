@@ -49,6 +49,11 @@ bitfield! {
     #[allow(dead_code)]
     into Foo, _, set_into_foo5: 31, 31;
     into Foo, into_foo6, _: 29, 29, 3;
+    i8;
+    signed_single_bit, set_signed_single_bit: 0, 0;
+    signed_two_bits, set_signed_two_bits: 1, 0;
+    signed_eight_bits, set_signed_eight_bits: 7, 0;
+    signed_eight_bits_unaligned, set_signed_eight_bits_unaligned: 8, 1;
 }
 
 
@@ -86,24 +91,35 @@ fn test_single_bit() {
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x0, fb.foo2());
     assert_eq!(false, fb.single_bit());
+    assert_eq!(-1, fb.signed_single_bit());
 
     fb.set_foo2(1);
     assert_eq!(0x8000_0001, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(false, fb.single_bit());
+    assert_eq!(-1, fb.signed_single_bit());
 
     fb.set_foo1(0);
     assert_eq!(0x8000_0000, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(false, fb.single_bit());
+    assert_eq!(0, fb.signed_single_bit());
 
     fb.set_single_bit(true);
     assert_eq!(0x8000_0008, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
     assert_eq!(true, fb.single_bit());
+    assert_eq!(0, fb.signed_single_bit());
+
+    fb.set_signed_single_bit(-1);
+    assert_eq!(0x8000_0009, fb.0);
+    assert_eq!(0x1, fb.foo1());
+    assert_eq!(0x1, fb.foo2());
+    assert_eq!(true, fb.single_bit());
+    assert_eq!(-1, fb.signed_single_bit());
 }
 
 #[test]
@@ -264,6 +280,87 @@ fn test_getter_only_array() {
 }
 
 #[test]
+fn test_signed() {
+    let mut fb = FooBar(0);
+
+    assert_eq!(0, fb.signed_two_bits());
+    assert_eq!(0, fb.signed_eight_bits());
+    assert_eq!(0, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_two_bits(-2);
+    assert_eq!(0b10, fb.0);
+    assert_eq!(-2, fb.signed_two_bits());
+    assert_eq!(2, fb.signed_eight_bits());
+    assert_eq!(1, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_two_bits(-1);
+    assert_eq!(0b11, fb.0);
+    assert_eq!(-1, fb.signed_two_bits());
+    assert_eq!(3, fb.signed_eight_bits());
+    assert_eq!(1, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_two_bits(0);
+    assert_eq!(0, fb.0);
+    assert_eq!(0, fb.signed_two_bits());
+    assert_eq!(0, fb.signed_eight_bits());
+    assert_eq!(0, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_two_bits(1);
+    assert_eq!(1, fb.0);
+    assert_eq!(1, fb.signed_two_bits());
+    assert_eq!(1, fb.signed_eight_bits());
+    assert_eq!(0, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits(0);
+    assert_eq!(0, fb.0);
+    assert_eq!(0, fb.signed_two_bits());
+    assert_eq!(0, fb.signed_eight_bits());
+    assert_eq!(0, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits(-1);
+    assert_eq!(0xFF, fb.0);
+    assert_eq!(-1, fb.signed_two_bits());
+    assert_eq!(-1, fb.signed_eight_bits());
+    assert_eq!(127, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits(-128);
+    assert_eq!(0x80, fb.0);
+    assert_eq!(0, fb.signed_two_bits());
+    assert_eq!(-128, fb.signed_eight_bits());
+    assert_eq!(64, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits(127);
+    assert_eq!(0x7F, fb.0);
+    assert_eq!(-1, fb.signed_two_bits());
+    assert_eq!(127, fb.signed_eight_bits());
+    assert_eq!(63, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits_unaligned(0);
+    assert_eq!(1, fb.0);
+    assert_eq!(1, fb.signed_two_bits());
+    assert_eq!(1, fb.signed_eight_bits());
+    assert_eq!(0, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits(0);
+    fb.set_signed_eight_bits_unaligned(-1);
+    assert_eq!(0x1FE, fb.0);
+    assert_eq!(-2, fb.signed_two_bits());
+    assert_eq!(-2, fb.signed_eight_bits());
+    assert_eq!(-1, fb.signed_eight_bits_unaligned());
+
+    fb.set_signed_eight_bits_unaligned(-128);
+    assert_eq!(0x100, fb.0);
+    assert_eq!(0, fb.signed_two_bits());
+    assert_eq!(0, fb.signed_eight_bits());
+    assert_eq!(-128, fb.signed_eight_bits_unaligned());
+    fb.set_signed_eight_bits_unaligned(127);
+    assert_eq!(0xFE, fb.0);
+    assert_eq!(-2, fb.signed_two_bits());
+    assert_eq!(-2, fb.signed_eight_bits());
+    assert_eq!(127, fb.signed_eight_bits_unaligned());
+}
+
+#[test]
 fn test_field_type() {
     let fb = FooBar(0);
     let _: u32 = fb.foo1();
@@ -285,6 +382,11 @@ fn test_field_type() {
     let _: Foo = fb.into_foo3();
     let _: Foo = fb.into_foo4();
     let _: Foo = fb.into_foo6(0);
+
+    let _: i8 = fb.signed_single_bit();
+    let _: i8 = fb.signed_two_bits();
+    let _: i8 = fb.signed_eight_bits();
+    let _: i8 = fb.signed_eight_bits_unaligned();
 }
 
 #[test]
@@ -315,7 +417,9 @@ fn test_debug() {
                     , 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0\
                     , 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1]\
                     , all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0)\
-                    , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)] }";
+                    , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], \
+                    signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, \
+                    signed_eight_bits_unaligned: 105 }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 
@@ -326,6 +430,11 @@ bitfield! {
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
     foo4, set_foo4: 19, 4;
+    i32;
+    signed_foo1, set_signed_foo1: 0, 0;
+    signed_foo2, set_signed_foo2: 7, 0;
+    signed_foo3, set_signed_foo3: 8, 1;
+    signed_foo4, set_signed_foo4: 19, 4;
 }
 
 #[test]
@@ -336,6 +445,10 @@ fn test_arraybitfield() {
     assert_eq!(0, ab.foo2());
     assert_eq!(0, ab.foo3());
     assert_eq!(0, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(0, ab.signed_foo2());
+    assert_eq!(0, ab.signed_foo3());
+    assert_eq!(0, ab.signed_foo4());
 
     ab.set_foo1(1);
     assert_eq!([1, 0, 0], ab.0);
@@ -343,6 +456,10 @@ fn test_arraybitfield() {
     assert_eq!(1, ab.foo2());
     assert_eq!(0, ab.foo3());
     assert_eq!(0, ab.foo4());
+    assert_eq!(-1, ab.signed_foo1());
+    assert_eq!(1, ab.signed_foo2());
+    assert_eq!(0, ab.signed_foo3());
+    assert_eq!(0, ab.signed_foo4());
 
     ab.set_foo1(0);
     ab.set_foo2(0xFF);
@@ -351,14 +468,24 @@ fn test_arraybitfield() {
     assert_eq!(0xFF, ab.foo2());
     assert_eq!(0x7F, ab.foo3());
     assert_eq!(0x0F, ab.foo4());
+    assert_eq!(-1, ab.signed_foo1());
+    assert_eq!(-1, ab.signed_foo2());
+    assert_eq!(127, ab.signed_foo3());
+    assert_eq!(0x0F, ab.signed_foo4());
+
 
     ab.set_foo2(0);
     ab.set_foo3(0xFF);
-    assert_eq!([0xFE, 0x1, 0], ab.0);
+    assert_eq!([0xFE, 0x01, 0], ab.0);
     assert_eq!(0, ab.foo1());
     assert_eq!(0xFE, ab.foo2());
     assert_eq!(0xFF, ab.foo3());
     assert_eq!(0x1F, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(-2, ab.signed_foo2());
+    assert_eq!(-1, ab.signed_foo3());
+    assert_eq!(0x1F, ab.signed_foo4());
+
 
     ab.set_foo3(0);
     ab.set_foo4(0xFFFF);
@@ -367,6 +494,41 @@ fn test_arraybitfield() {
     assert_eq!(0xF0, ab.foo2());
     assert_eq!(0xF8, ab.foo3());
     assert_eq!(0xFFFF, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(-16, ab.signed_foo2());
+    assert_eq!(-8, ab.signed_foo3());
+    assert_eq!(-1, ab.signed_foo4());
+
+    ab.set_foo4(0x0);
+    ab.set_signed_foo1(0);
+    assert_eq!([0x00, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo1(-1);
+    assert_eq!([0x01, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo1(0);
+    ab.set_signed_foo2(127);
+    assert_eq!([0x7F, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(-128);
+    assert_eq!([0x80, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(1);
+    assert_eq!([0x01, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(-1);
+    assert_eq!([0xFF, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(0);
+    ab.set_signed_foo3(127);
+    assert_eq!([0xFE, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo3(-1);
+    assert_eq!([0xFE, 0x01, 0x00], ab.0);
+
+    ab.set_signed_foo3(0);
+    ab.set_signed_foo4(-1);
+    assert_eq!([0xF0, 0xFF, 0x0F], ab.0);
 }
 
 
@@ -429,6 +591,11 @@ bitfield! {
     foo2, set_foo2: 7, 0;
     foo3, set_foo3: 8, 1;
     foo4, set_foo4: 19, 4;
+    i32;
+    signed_foo1, set_signed_foo1: 0, 0;
+    signed_foo2, set_signed_foo2: 7, 0;
+    signed_foo3, set_signed_foo3: 8, 1;
+    signed_foo4, set_signed_foo4: 19, 4;
 }
 
 #[test]
@@ -439,6 +606,10 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0, ab.foo2());
     assert_eq!(0, ab.foo3());
     assert_eq!(0, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(0, ab.signed_foo2());
+    assert_eq!(0, ab.signed_foo3());
+    assert_eq!(0, ab.signed_foo4());
 
     ab.set_foo1(1);
     assert_eq!([0b1000_0000, 0, 0], ab.0);
@@ -446,6 +617,10 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0b1000_0000, ab.foo2());
     assert_eq!(0, ab.foo3());
     assert_eq!(0, ab.foo4());
+    assert_eq!(-1, ab.signed_foo1());
+    assert_eq!(-128, ab.signed_foo2());
+    assert_eq!(0, ab.signed_foo3());
+    assert_eq!(0, ab.signed_foo4());
 
     ab.set_foo1(0);
     ab.set_foo2(0xFF);
@@ -454,6 +629,10 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0b1111_1111, ab.foo2());
     assert_eq!(0b1111_1110, ab.foo3());
     assert_eq!(0b1111_0000_0000_0000, ab.foo4());
+    assert_eq!(-1, ab.signed_foo1());
+    assert_eq!(-1, ab.signed_foo2());
+    assert_eq!(-2, ab.signed_foo3());
+    assert_eq!(-4096, ab.signed_foo4());
 
     ab.set_foo2(0);
     ab.set_foo3(0xFF);
@@ -462,6 +641,10 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0b0111_1111, ab.foo2());
     assert_eq!(0xFF, ab.foo3());
     assert_eq!(0b1111_1000_0000_0000, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(127, ab.signed_foo2());
+    assert_eq!(-1, ab.signed_foo3());
+    assert_eq!(-2048, ab.signed_foo4());
 
     ab.set_foo3(0);
     ab.set_foo4(0xFFFF);
@@ -470,6 +653,41 @@ fn test_arraybitfield_msb0() {
     assert_eq!(0x0F, ab.foo2());
     assert_eq!(0b0001_1111, ab.foo3());
     assert_eq!(0xFFFF, ab.foo4());
+    assert_eq!(0, ab.signed_foo1());
+    assert_eq!(0x0F, ab.signed_foo2());
+    assert_eq!(0b0001_1111, ab.signed_foo3());
+    assert_eq!(-1, ab.signed_foo4());
+
+    ab.set_foo4(0x0);
+    ab.set_signed_foo1(0);
+    assert_eq!([0x00, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo1(-1);
+    assert_eq!([0b1000_0000, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo1(0);
+    ab.set_signed_foo2(127);
+    assert_eq!([0x7F, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(-128);
+    assert_eq!([0x80, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(1);
+    assert_eq!([0x01, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(-1);
+    assert_eq!([0xFF, 0x00, 0x00], ab.0);
+
+    ab.set_signed_foo2(0);
+    ab.set_signed_foo3(127);
+    assert_eq!([0b0011_1111, 0b1000_0000, 0], ab.0);
+
+    ab.set_signed_foo3(-1);
+    assert_eq!([0b0111_1111, 0b1000_0000, 0], ab.0);
+
+    ab.set_signed_foo3(0);
+    ab.set_signed_foo4(-1);
+    assert_eq!([0x0F, 0xFF, 0xF0], ab.0);
 }
 
 mod some_module {

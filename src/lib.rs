@@ -326,12 +326,13 @@ macro_rules! bitfield_struct {
             for $name<T> {
                 fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
+                    let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                     let mut value = 0;
                     for i in (lsb..msb+1).rev() {
                         value <<= 1;
                         value |= ((self.0.as_ref()[i/bit_len] >> (i%bit_len)) & 1) as $bitrange_ty;
                     }
-                    value
+                    value << (value_bit_len - (msb - lsb + 1)) >> (value_bit_len - (msb - lsb + 1))
                 }
 
                 fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
@@ -350,13 +351,14 @@ macro_rules! bitfield_struct {
             for $name<T> {
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
+                let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                 let mut value = 0;
                 for i in lsb..msb+1 {
                     value <<= 1;
                     value |= ((self.0.as_ref()[i/bit_len] >> (bit_len - i%bit_len - 1)) & 1)
                         as $bitrange_ty;
                 }
-                value
+                value << (value_bit_len - (msb - lsb + 1)) >> (value_bit_len - (msb - lsb + 1))
             }
 
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
@@ -385,6 +387,10 @@ macro_rules! bitfield_struct {
         bitfield_struct!(@impl_bitrange_slice $name, $t, u16);
         bitfield_struct!(@impl_bitrange_slice $name, $t, u32);
         bitfield_struct!(@impl_bitrange_slice $name, $t, u64);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, i8);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, i16);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, i32);
+        bitfield_struct!(@impl_bitrange_slice $name, $t, i64);
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty])) => {
         $(#[$attribute])*
@@ -394,6 +400,10 @@ macro_rules! bitfield_struct {
         bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u16);
         bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u32);
         bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u64);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i8);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i16);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i32);
+        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i64);
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty)) => {
         $(#[$attribute])*
@@ -533,7 +543,10 @@ macro_rules! impl_bitrange_for_u {
             #[inline]
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                 let bit_len = size_of::<$t>()*8;
-                ((*self << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb)) as $bitrange_ty
+                let result_bit_len = size_of::<$bitrange_ty>()*8;
+                let result = ((*self << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb))
+                    as $bitrange_ty;
+                result << (result_bit_len - (msb - lsb + 1)) >> (result_bit_len - (msb - lsb + 1))
             }
 
             #[inline]
@@ -544,7 +557,7 @@ macro_rules! impl_bitrange_for_u {
                 let mask: $t = !(0 as $t)
                     << (bit_len - msb - 1)
                     >> (bit_len - msb - 1 + lsb)
-                        << (lsb);
+                    << (lsb);
                 *self &= !mask;
                 *self |= (value as $t << lsb) & mask;
             }
@@ -562,3 +575,14 @@ impl_bitrange_for_u!{u64, u8}
 impl_bitrange_for_u!{u64, u16}
 impl_bitrange_for_u!{u64, u32}
 impl_bitrange_for_u!{u64, u64}
+
+impl_bitrange_for_u!{u8, i8}
+impl_bitrange_for_u!{u16, i8}
+impl_bitrange_for_u!{u16, i16}
+impl_bitrange_for_u!{u32, i8}
+impl_bitrange_for_u!{u32, i16}
+impl_bitrange_for_u!{u32, i32}
+impl_bitrange_for_u!{u64, i8}
+impl_bitrange_for_u!{u64, i16}
+impl_bitrange_for_u!{u64, i32}
+impl_bitrange_for_u!{u64, i64}
