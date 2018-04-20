@@ -32,7 +32,8 @@ bitfield!{
 }
 ```
 
-In this exeample, all the field are read-only.
+In this example, all the fields are read-only, the _ as setter name signals to skip the setter method.
+The range at the end (e.g. 3, 0) defines the bit range where the information is encoded.
 
 ## Documentation
 
