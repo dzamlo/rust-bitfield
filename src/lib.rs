@@ -285,7 +285,7 @@ macro_rules! bitfield_debug {
     ($debug_struct:ident, $self:ident, ) => {};
 }
 
-/// Declares a struct that can implement `BitRange`,
+/// Declares a struct that implements `BitRange`,
 ///
 /// This macro will generate a tuple struct (or "newtype") that implements the `BitRange` trait and
 /// by extension the `Bit` trait.
@@ -299,7 +299,7 @@ macro_rules! bitfield_debug {
 /// also use `MSB0 [t]`. The difference will be the positions of the bit. You can use the
 /// `bits_positions` example to see where each bits is. If the type is neither of this two, the
 /// "newtype" will wrap a value of the specified type and implements `BitRange` the same ways as
-/// the wrapped type unless dont_use_default_impl is passed as last token.
+/// the wrapped type.
 ///
 /// # Examples
 ///
@@ -317,8 +317,6 @@ macro_rules! bitfield_debug {
 /// bitfield_struct!{struct BitField3([u8])}
 ///
 /// bitfield_struct!{struct BitField4(MSB0 [u8])}
-///
-/// bitfield_struct!{struct BitField5(u8) dont_use_default_impl}
 /// ```
 ///
 #[macro_export]
@@ -375,21 +373,11 @@ macro_rules! bitfield_struct {
             }
         }
     };
-    (@impl_default $name:ident, $t:ty) => {
-        impl<T> $crate::BitRange<T> for $name where $t: $crate::BitRange<T> {
-            fn bit_range(&self, msb: usize, lsb: usize) -> T {
-                self.0.bit_range(msb, lsb)
-            }
-            fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T) {
-                self.0.set_bit_range(msb, lsb, value);
-            }
-        }
+    ($(#[$attribute:meta])* struct $name:ident($($args:tt)*)) => {
+        bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
     };
-    ($(#[$attribute:meta])* struct $name:ident($($args:tt)*) $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* () struct $name($($args)*) $($rest)*);
-    };
-    ($(#[$attribute:meta])* pub struct $name:ident($($args:tt)*) $($rest:tt)*)=> {
-        bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*) $($rest)*);
+    ($(#[$attribute:meta])* pub struct $name:ident($($args:tt)*))=> {
+        bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*));
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty])) => {
         $(#[$attribute])*
@@ -421,11 +409,14 @@ macro_rules! bitfield_struct {
         $(#[$attribute])*
         $($vis)* struct $name(pub $t);
 
-        bitfield_struct!(@impl_default $name, $t);
-    };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty) dont_use_default_impl) => {
-        $(#[$attribute])*
-        $($vis)* struct $name(pub $t);
+        impl<T> $crate::BitRange<T> for $name where $t: $crate::BitRange<T> {
+            fn bit_range(&self, msb: usize, lsb: usize) -> T {
+                self.0.bit_range(msb, lsb)
+            }
+            fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T) {
+                self.0.set_bit_range(msb, lsb, value);
+            }
+        }
     };
 }
 
@@ -522,21 +513,33 @@ macro_rules! bitfield {
             bitfield_fields!{$($rest)*}
         }
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) => {
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); (dont_use_default_impl); $($rest)*}
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); impl Debug; no default BitRange; $($rest:tt)*) => {
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; impl Debug; $($rest)*}
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); impl Debug; $($rest:tt)*) => {
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); (); impl Debug; $($rest)*}
-    };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); ($($default_impl:tt)*); impl Debug; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl Debug; $($rest:tt)*) => {
         impl $crate::fmt::Debug for $name {
             bitfield_debug!{struct $name; $($rest)*}
         }
 
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); ($($default_impl)*); $($rest)*}
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; $($rest)*}
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); ($($default_impl:tt)*); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t) $($default_impl)*);
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); impl Debug; $($rest:tt)*) => {
+        impl $crate::fmt::Debug for $name {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+
+        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); $($rest)*}
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) => {
+        $(#[$attribute])*
+        $($vis)* struct $name(pub $t);
+
+        impl $name {
+            bitfield_fields!{$t; $($rest)*}
+         }
+    };
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
+        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
 
         impl $name {
             bitfield_fields!{$t; $($rest)*}
