@@ -832,3 +832,89 @@ mod test_types {
         let _: &'static str = test.field20();
     }
 }
+
+#[allow(dead_code)]
+mod test_no_default_bitrange {
+    use bitfield::BitRange;
+    use std::fmt::Debug;
+    use std::fmt::Error;
+    use std::fmt::Formatter;
+    bitfield!{
+      #[derive(Eq, PartialEq)]
+      pub struct BitField1(u16);
+      no default BitRange;
+      impl Debug;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 2;
+    }
+
+    impl BitRange<u8> for BitField1 {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u8 {
+            (msb + lsb) as u8
+        }
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
+            self.0 = msb as u16 + lsb as u16 + value as u16
+        }
+    }
+
+    #[test]
+    fn custom_bitrange_implementation_is_used() {
+        let mut bf = BitField1(0);
+        assert_eq!(bf.field1(), 10 + 0);
+        assert_eq!(bf.field2(), 12 + 3);
+        assert_eq!(bf.field3(), true);
+        bf.set_field1(42);
+        assert_eq!(bf, BitField1(10 + 0 + 42));
+    }
+
+    bitfield!{
+      pub struct BitField2(u16);
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl BitRange<u8> for BitField2 {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            unimplemented!()
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {
+            unimplemented!()
+        }
+    }
+
+    // Make sure Debug wasn't implemented by implementing it.
+    impl Debug for BitField2 {
+        fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
+            unimplemented!()
+        }
+    }
+
+    // Check that we can put `impl Debug` before `no default BitRange`
+    bitfield! {
+      pub struct BitField3(u16);
+      impl Debug;
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl BitRange<u8> for BitField3 {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    #[test]
+    fn test_debug_is_implemented_with_no_default_bitrange() {
+        format!("{:?}", BitField1(0));
+        format!("{:?}", BitField3(0));
+    }
+}
