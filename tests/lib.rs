@@ -56,13 +56,11 @@ bitfield! {
     signed_eight_bits_unaligned, set_signed_eight_bits_unaligned: 8, 1;
 }
 
-
 impl FooBar {
     bitfield_fields!{
         // Boolean field don't need a type
         foo7, _: 1;
     }
-
 
     bitfield_fields!{
         // If all fields have a type, we don't need to specify a default type
@@ -473,7 +471,6 @@ fn test_arraybitfield() {
     assert_eq!(127, ab.signed_foo3());
     assert_eq!(0x0F, ab.signed_foo4());
 
-
     ab.set_foo2(0);
     ab.set_foo3(0xFF);
     assert_eq!([0xFE, 0x01, 0], ab.0);
@@ -485,7 +482,6 @@ fn test_arraybitfield() {
     assert_eq!(-2, ab.signed_foo2());
     assert_eq!(-1, ab.signed_foo3());
     assert_eq!(0x1F, ab.signed_foo4());
-
 
     ab.set_foo3(0);
     ab.set_foo4(0xFFFF);
@@ -530,7 +526,6 @@ fn test_arraybitfield() {
     ab.set_signed_foo4(-1);
     assert_eq!([0xF0, 0xFF, 0x0F], ab.0);
 }
-
 
 #[test]
 fn test_arraybitfield2() {
@@ -798,7 +793,6 @@ mod test_types {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: AtomicUsize) {}
     }
 
-
     impl BitRange<Vec<AtomicUsize>> for Foo {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> Vec<AtomicUsize> {
             vec![AtomicUsize::new(0)]
@@ -806,14 +800,12 @@ mod test_types {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: Vec<AtomicUsize>) {}
     }
 
-
     impl<'a> BitRange<&'a str> for Foo {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> &'a str {
             ""
         }
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: &'a str) {}
     }
-
 
     #[test]
     fn test_field_type() {
