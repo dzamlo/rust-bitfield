@@ -224,6 +224,7 @@ fn test_array_field2() {
 
 #[allow(unknown_lints)]
 #[allow(identity_op)]
+#[allow(erasing_op)]
 #[test]
 fn test_setter_only_array() {
     let mut fb = FooBar(0);
@@ -855,10 +856,12 @@ mod test_no_default_bitrange {
             (msb + lsb) as u8
         }
         fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
-            self.0 = msb as u16 + lsb as u16 + value as u16
+            self.0 = msb as u16 + lsb as u16 + u16::from(value)
         }
     }
 
+    #[allow(unknown_lints)]
+    #[allow(identity_op)]
     #[test]
     fn custom_bitrange_implementation_is_used() {
         let mut bf = BitField1(0);

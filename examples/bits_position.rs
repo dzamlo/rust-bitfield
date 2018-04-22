@@ -46,7 +46,7 @@ fn main() {
             print!("{:2} - {:2} ({:04b}): ", msb, lsb, value);
             println_slice_bits(&bits_locations.0);
         }
-        println!("");
+        println!();
         bits_locations.set_bit_range(msb, lsb, 0u8);
     }
 
@@ -68,7 +68,7 @@ fn main() {
             print!("{:2} - {:2} ({:04b}): ", msb, lsb, value);
             println_slice_bits(&bits_locations_msb0.0);
         }
-        println!("");
+        println!();
 
         bits_locations_msb0.set_bit_range(msb, lsb, 0u8);
     }
