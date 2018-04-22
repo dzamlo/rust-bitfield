@@ -317,6 +317,8 @@ macro_rules! bitfield_debug {
 /// bitfield_struct!{struct BitField3([u8])}
 ///
 /// bitfield_struct!{struct BitField4(MSB0 [u8])}
+///
+/// bitfield_struct!{struct BitField5(u8) dont_use_default_impl}
 /// ```
 ///
 #[macro_export]
@@ -455,6 +457,31 @@ macro_rules! bitfield_struct {
 ///   // The fields default to u16
 ///   field1, set_field1: 10, 0;
 ///   pub field2, _ : 12, 3;
+/// }
+/// ```
+///
+/// or with a custom `BitRange` implementation :
+/// ```rust
+/// # #[macro_use] extern crate bitfield;
+/// # use bitfield::BitRange;
+/// # fn main() {}
+/// bitfield!{
+///   pub struct BitField1(u16);
+///   no default BitRange;
+///   impl Debug;
+///   u8;
+///   field1, set_field1: 10, 0;
+///   pub field2, _ : 12, 3;
+/// }
+/// impl BitRange<u8> for BitField1 {
+///     fn bit_range(&self, msb: usize, lsb: usize) -> u8 {
+///         let width = msb - lsb + 1;
+///         let mask = (1 << width) - 1;
+///         ((self.0 >> lsb) & mask) as u8
+///     }
+///     fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
+///         self.0 = (value as u16) << lsb;
+///     }
 /// }
 /// ```
 #[macro_export]
