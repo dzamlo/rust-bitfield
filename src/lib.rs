@@ -14,7 +14,7 @@
 /// (which traits are required depending on what type of fields are used).
 ///
 /// The syntax of this macro is composed of declarations ended by semicolons. There are two types
-/// of delcarations: default type, and fields.
+/// of declarations: default type, and fields.
 ///
 /// A default type is just a type followed by a semicolon. This will affect all the following field
 /// declarations.
@@ -209,7 +209,7 @@ macro_rules! bitfield_fields {
 ///
 /// In most of the case, you will not directly call this macros, but use `bitfield`.
 ///
-/// The syntax is `struct TheNameOfTheStruct` folowowed by the syntax of `bitfield_fields`.
+/// The syntax is `struct TheNameOfTheStruct` followed by the syntax of `bitfield_fields`.
 ///
 /// The write-only fields are ignored.
 ///
