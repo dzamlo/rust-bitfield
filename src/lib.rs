@@ -547,7 +547,6 @@ macro_rules! bitfield {
     };
 }
 
-
 #[doc(hidden)]
 pub use core::convert::Into;
 #[doc(hidden)]

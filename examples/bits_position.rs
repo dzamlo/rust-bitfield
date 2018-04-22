@@ -8,7 +8,6 @@ bitfield!{
     struct BitsLocations([u8]);
 }
 
-
 bitfield!{
     struct BitsLocationsMsb0(MSB0 [u8]);
 }
@@ -26,7 +25,6 @@ fn println_slice_bits(slice: &[u8]) {
         println!("]");
     }
 }
-
 
 fn main() {
     let mut bits_locations = BitsLocations([0; 3]);
@@ -54,7 +52,6 @@ fn main() {
 
     println!("MSB0 version:");
 
-
     for i in 0..(3 * 8) {
         bits_locations_msb0.set_bit(i, true);
         print!("{:2}: ", i);
@@ -62,7 +59,6 @@ fn main() {
 
         bits_locations_msb0.set_bit(i, false);
     }
-
 
     for i in 0..(3 * 8 - 3) {
         let msb = i + 3;
