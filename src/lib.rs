@@ -51,7 +51,8 @@
 /// ```rust
 /// # #[macro_use] extern crate bitfield;
 /// # fn main() {}
-/// # bitfield_struct!{struct FooBar(u64)}
+/// # struct FooBar(u64);
+/// # bitfield_bitrange!{struct FooBar(u64)}
 /// # impl From<u32> for FooBar{ fn from(_: u32) -> FooBar {unimplemented!()}}
 /// # impl FooBar {
 /// bitfield_fields!{
@@ -217,7 +218,8 @@ macro_rules! bitfield_fields {
 ///
 /// ```rust
 /// # #[macro_use] extern crate bitfield;
-/// bitfield_struct!{struct FooBar(u32)}
+/// struct FooBar(u32);
+/// bitfield_bitrange!{struct FooBar(u32)}
 /// impl FooBar{
 ///     bitfield_fields!{
 ///        u32;
@@ -306,21 +308,18 @@ macro_rules! bitfield_debug {
 /// ```rust
 /// # #[macro_use] extern crate bitfield;
 /// # fn main() {}
-/// bitfield_struct!{struct BitField1(u32)}
+/// struct BitField1(u32);
+/// bitfield_bitrange!{struct BitField1(u32)}
 ///
-/// bitfield_struct!{
-///     /// The documentation for this type
-///     #[derive(Copy, Clone)]
-///     pub struct BitField2(u64)
-/// }
+/// struct BitField2<T>(T);
+/// bitfield_bitrange!{struct BitField2([u8])}
 ///
-/// bitfield_struct!{struct BitField3([u8])}
-///
-/// bitfield_struct!{struct BitField4(MSB0 [u8])}
+/// struct BitField3<T>(T);
+/// bitfield_bitrange!{struct BitField3(MSB0 [u8])}
 /// ```
 ///
 #[macro_export]
-macro_rules! bitfield_struct {
+macro_rules! bitfield_bitrange {
     (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
         impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
             for $name<T> {
@@ -373,42 +372,27 @@ macro_rules! bitfield_struct {
             }
         }
     };
-    ($(#[$attribute:meta])* struct $name:ident($($args:tt)*)) => {
-        bitfield_struct!($(#[$attribute])* () struct $name($($args)*));
+    (struct $name:ident([$t:ty])) => {
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, u8);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, u16);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, u32);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, u64);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, i8);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, i16);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, i32);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, i64);
     };
-    ($(#[$attribute:meta])* pub struct $name:ident($($args:tt)*))=> {
-        bitfield_struct!($(#[$attribute])* (pub) struct $name($($args)*));
+    (struct $name:ident(MSB0 [$t:ty])) => {
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u8);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u16);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u32);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u64);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i8);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i16);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i32);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i64);
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty])) => {
-        $(#[$attribute])*
-        $($vis)* struct $name<T>(pub T);
-
-        bitfield_struct!(@impl_bitrange_slice $name, $t, u8);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, u16);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, u32);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, u64);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, i8);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, i16);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, i32);
-        bitfield_struct!(@impl_bitrange_slice $name, $t, i64);
-    };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty])) => {
-        $(#[$attribute])*
-        $($vis)* struct $name<T>(pub T);
-
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u8);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u16);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u32);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, u64);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i8);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i16);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i32);
-        bitfield_struct!(@impl_bitrange_slice_msb0 $name, $t, i64);
-    };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty)) => {
-        $(#[$attribute])*
-        $($vis)* struct $name(pub $t);
-
+    (struct $name:ident($t:ty)) => {
         impl<T> $crate::BitRange<T> for $name where $t: $crate::BitRange<T> {
             fn bit_range(&self, msb: usize, lsb: usize) -> T {
                 self.0.bit_range(msb, lsb)
@@ -420,9 +404,9 @@ macro_rules! bitfield_struct {
     };
 }
 
-/// Combines `bitfield_struct` and `bitfield_fields`.
+/// Combines `bitfield_bitrange` and `bitfield_fields`.
 ///
-/// The syntax of this macro is the syntax of `bitfield_struct`, a semicolon, and then the syntax
+/// The syntax of this macro is the syntax of `bitfield_bitrange`, a semicolon, and then the syntax
 /// of `bitfield_fields`.
 ///
 /// If you put `no default BitRange` after the first semicolon, no implementation of `BitRange` will
@@ -432,7 +416,7 @@ macro_rules! bitfield_struct {
 /// generated with the `bitfield_debug` macro.
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
-/// from an appropriate `impl` block. If you use the non-slice form of `bitfield_struct`, the
+/// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
 /// default type for `bitfield_fields` will be set to the wrapped fields.
 ///
 /// See the documentation of these macros more information on their respective syntax.
@@ -483,6 +467,7 @@ macro_rules! bitfield {
     ($(#[$attribute:meta])* struct $($rest:tt)*) => {
         bitfield!($(#[$attribute])* () struct $($rest)*);
     };
+
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); impl Debug; $($rest:tt)*)
         => {
         impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
@@ -492,12 +477,15 @@ macro_rules! bitfield {
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); $($rest)*}
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name([$t]));
+        $(#[$attribute])*
+        $($vis)* struct $name<T>(pub T);
+        bitfield_bitrange!(struct $name([$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
         }
     };
+
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); impl Debug;
      $($rest:tt)*) => {
         impl<T: AsMut<[$t]> + AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
@@ -507,12 +495,16 @@ macro_rules! bitfield {
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name(MSB0 [$t]); $($rest)*}
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name(MSB0 [$t]));
+         $(#[$attribute])*
+         $($vis)* struct $name<T>(pub T);
+
+        bitfield_bitrange!(struct $name(MSB0 [$t]));
 
         impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
             bitfield_fields!{$($rest)*}
         }
     };
+
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); impl Debug; no default BitRange; $($rest:tt)*) => {
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; impl Debug; $($rest)*}
     };
@@ -539,7 +531,10 @@ macro_rules! bitfield {
          }
     };
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
-        bitfield_struct!($(#[$attribute])* $($vis)* struct $name($t));
+        $(#[$attribute])*
+        $($vis)* struct $name(pub $t);
+
+        bitfield_bitrange!(struct $name($t));
 
         impl $name {
             bitfield_fields!{$t; $($rest)*}
