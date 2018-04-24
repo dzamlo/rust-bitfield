@@ -883,11 +883,9 @@ mod test_no_default_bitrange {
 
     impl BitRange<u8> for BitField2 {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
-            unimplemented!()
+            0
         }
-        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {
-            unimplemented!()
-        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
     // Make sure Debug wasn't implemented by implementing it.
@@ -915,9 +913,131 @@ mod test_no_default_bitrange {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
+    bitfield!{
+      #[derive(Eq, PartialEq)]
+      pub struct BitField4([u16]);
+      no default BitRange;
+      impl Debug;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 2;
+    }
+
+    impl<T> BitRange<u8> for BitField4<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    bitfield!{
+      pub struct BitField5([u16]);
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl<T> BitRange<u8> for BitField5<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    // Make sure Debug wasn't implemented by implementing it.
+    impl<T> Debug for BitField5<T> {
+        fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
+            unimplemented!()
+        }
+    }
+
+    // Check that we can put `impl Debug` before `no default BitRange`
+    bitfield! {
+      pub struct BitField6([u16]);
+      impl Debug;
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl<T> BitRange<u8> for BitField6<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    bitfield!{
+      #[derive(Eq, PartialEq)]
+      pub struct BitField7(MSB0 [u16]);
+      no default BitRange;
+      impl Debug;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 2;
+    }
+
+    impl<T> BitRange<u8> for BitField7<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    bitfield!{
+      pub struct BitField8(MSB0 [u16]);
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl<T> BitRange<u8> for BitField8<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
+    // Make sure Debug wasn't implemented by implementing it.
+    impl<T> Debug for BitField8<T> {
+        fn fmt(&self, _: &mut Formatter) -> Result<(), Error> {
+            unimplemented!()
+        }
+    }
+
+    // Check that we can put `impl Debug` before `no default BitRange`
+    bitfield! {
+      pub struct BitField9([u16]);
+      impl Debug;
+      no default BitRange;
+      u8;
+      field1, set_field1: 10, 0;
+      pub field2, _ : 12, 3;
+      field3, set_field3: 0;
+    }
+
+    impl<T> BitRange<u8> for BitField9<T> {
+        fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
+            0
+        }
+        fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
+    }
+
     #[test]
     fn test_debug_is_implemented_with_no_default_bitrange() {
         format!("{:?}", BitField1(0));
         format!("{:?}", BitField3(0));
+        format!("{:?}", BitField4([0; 1]));
+        format!("{:?}", BitField6([0; 1]));
+        format!("{:?}", BitField7([0; 1]));
+        format!("{:?}", BitField9([0; 1]));
     }
 }
