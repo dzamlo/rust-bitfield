@@ -287,12 +287,12 @@ macro_rules! bitfield_debug {
     ($debug_struct:ident, $self:ident, ) => {};
 }
 
-/// Declares a struct that implements `BitRange`,
+/// Implements `BitRange` for a tuple struct (or "newtype").
 ///
-/// This macro will generate a tuple struct (or "newtype") that implements the `BitRange` trait and
-/// by extension the `Bit` trait.
+/// This macro will generate an implementation of the `BitRange` trait for an existing single
+/// element tuple struct.
 ///
-/// The syntax is more or less the same as declaring a "newtype", including the attributes,
+/// The syntax is more or less the same as declaring a "newtype", **without** the attributes,
 /// documentation comments and pub keyword.
 ///
 /// The difference with a normal "newtype" is the type in parentheses. If the type is `[t]` (where
@@ -406,20 +406,21 @@ macro_rules! bitfield_bitrange {
 
 /// Combines `bitfield_bitrange` and `bitfield_fields`.
 ///
-/// The syntax of this macro is the syntax of `bitfield_bitrange`, a semicolon, and then the syntax
-/// of `bitfield_fields`.
+/// The syntax of this macro is the syntax of a tuple struct, including attributes and
+/// documentation comments, followed by a semicolon, some optional elements, and finally the fields
+/// as described in the `bitfield_fields` documentation.
 ///
-/// If you put `no default BitRange` after the first semicolon, no implementation of `BitRange` will
-/// be generated.
+/// The first optional element is `no default BitRange;`. With that, no implementation of
+/// `BitRange` will be generated.
 ///
-/// If you put `impl Debug;` an implementation of `fmt::Debug` will be
-/// generated with the `bitfield_debug` macro.
+/// The second optional element is `impl Debug;`. This will generate an implementation of
+/// `fmt::Debug` with the `bitfield_debug` macro.
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
 /// default type for `bitfield_fields` will be set to the wrapped fields.
 ///
-/// See the documentation of these macros more information on their respective syntax.
+/// See the documentation of these macros for more information on their respective syntax.
 ///
 /// # Example
 ///
