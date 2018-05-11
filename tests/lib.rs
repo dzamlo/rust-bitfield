@@ -434,20 +434,22 @@ bitfield! {
     signed_foo2, set_signed_foo2: 7, 0;
     signed_foo3, set_signed_foo3: 8, 1;
     signed_foo4, set_signed_foo4: 19, 4;
+    u128, u128_getter, set_u128: 19, 4;
 }
 
 #[test]
 fn test_arraybitfield() {
     let mut ab = ArrayBitfield([0; 3]);
 
-    assert_eq!(0, ab.foo1());
-    assert_eq!(0, ab.foo2());
-    assert_eq!(0, ab.foo3());
-    assert_eq!(0, ab.foo4());
-    assert_eq!(0, ab.signed_foo1());
-    assert_eq!(0, ab.signed_foo2());
-    assert_eq!(0, ab.signed_foo3());
-    assert_eq!(0, ab.signed_foo4());
+    assert_eq!(0u32, ab.foo1());
+    assert_eq!(0u32, ab.foo2());
+    assert_eq!(0u32, ab.foo3());
+    assert_eq!(0u32, ab.foo4());
+    assert_eq!(0i32, ab.signed_foo1());
+    assert_eq!(0i32, ab.signed_foo2());
+    assert_eq!(0i32, ab.signed_foo3());
+    assert_eq!(0i32, ab.signed_foo4());
+    assert_eq!(0u128, ab.u128_getter());
 
     ab.set_foo1(1);
     assert_eq!([1, 0, 0], ab.0);
@@ -459,6 +461,7 @@ fn test_arraybitfield() {
     assert_eq!(1, ab.signed_foo2());
     assert_eq!(0, ab.signed_foo3());
     assert_eq!(0, ab.signed_foo4());
+    assert_eq!(0, ab.u128_getter());
 
     ab.set_foo1(0);
     ab.set_foo2(0xFF);
@@ -471,6 +474,7 @@ fn test_arraybitfield() {
     assert_eq!(-1, ab.signed_foo2());
     assert_eq!(127, ab.signed_foo3());
     assert_eq!(0x0F, ab.signed_foo4());
+    assert_eq!(0x0F, ab.u128_getter());
 
     ab.set_foo2(0);
     ab.set_foo3(0xFF);
@@ -483,6 +487,7 @@ fn test_arraybitfield() {
     assert_eq!(-2, ab.signed_foo2());
     assert_eq!(-1, ab.signed_foo3());
     assert_eq!(0x1F, ab.signed_foo4());
+    assert_eq!(0x1F, ab.u128_getter());
 
     ab.set_foo3(0);
     ab.set_foo4(0xFFFF);
@@ -495,6 +500,7 @@ fn test_arraybitfield() {
     assert_eq!(-16, ab.signed_foo2());
     assert_eq!(-8, ab.signed_foo3());
     assert_eq!(-1, ab.signed_foo4());
+    assert_eq!(0xFFFF, ab.u128_getter());
 
     ab.set_foo4(0x0);
     ab.set_signed_foo1(0);
@@ -525,6 +531,10 @@ fn test_arraybitfield() {
 
     ab.set_signed_foo3(0);
     ab.set_signed_foo4(-1);
+    assert_eq!([0xF0, 0xFF, 0x0F], ab.0);
+
+    ab.set_signed_foo4(0);
+    ab.set_u128(0xFFFF);
     assert_eq!([0xF0, 0xFF, 0x0F], ab.0);
 }
 

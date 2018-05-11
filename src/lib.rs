@@ -377,20 +377,24 @@ macro_rules! bitfield_bitrange {
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, u16);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, u32);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, u64);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, u128);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, i8);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, i16);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, i32);
         bitfield_bitrange!(@impl_bitrange_slice $name, $t, i64);
+        bitfield_bitrange!(@impl_bitrange_slice $name, $t, i128);
     };
     (struct $name:ident(MSB0 [$t:ty])) => {
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u8);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u16);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u32);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u64);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, u128);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i8);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i16);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i32);
         bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i64);
+        bitfield_bitrange!(@impl_bitrange_slice_msb0 $name, $t, i128);
     };
     (struct $name:ident($t:ty)) => {
         impl<T> $crate::BitRange<T> for $name where $t: $crate::BitRange<T> {
@@ -600,6 +604,11 @@ impl_bitrange_for_u!{u64, u8}
 impl_bitrange_for_u!{u64, u16}
 impl_bitrange_for_u!{u64, u32}
 impl_bitrange_for_u!{u64, u64}
+impl_bitrange_for_u!{u128, u8}
+impl_bitrange_for_u!{u128, u16}
+impl_bitrange_for_u!{u128, u32}
+impl_bitrange_for_u!{u128, u64}
+impl_bitrange_for_u!{u128, u128}
 
 impl_bitrange_for_u!{u8, i8}
 impl_bitrange_for_u!{u16, i8}
@@ -611,3 +620,8 @@ impl_bitrange_for_u!{u64, i8}
 impl_bitrange_for_u!{u64, i16}
 impl_bitrange_for_u!{u64, i32}
 impl_bitrange_for_u!{u64, i64}
+impl_bitrange_for_u!{u128, i8}
+impl_bitrange_for_u!{u128, i16}
+impl_bitrange_for_u!{u128, i32}
+impl_bitrange_for_u!{u128, i64}
+impl_bitrange_for_u!{u128, i128}
