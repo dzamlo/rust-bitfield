@@ -19,4 +19,4 @@ value = "target/cargo-test-nightly"
 
 [[tests]]
 name = "cargo-fmt"
-command = ["cargo", "fmt", "--all", "--", "--write-mode=diff"]
+command = ["cargo", "fmt", "--all", "--", "--check"]
