@@ -570,6 +570,8 @@ macro_rules! impl_bitrange_for_u {
     ($t:ty, $bitrange_ty:ty) => {
         impl BitRange<$bitrange_ty> for $t {
             #[inline]
+            #[allow(unknown_lints)]
+            #[allow(cast_lossless)]
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                 let bit_len = size_of::<$t>()*8;
                 let result_bit_len = size_of::<$bitrange_ty>()*8;
@@ -594,34 +596,18 @@ macro_rules! impl_bitrange_for_u {
     }
 }
 
-impl_bitrange_for_u!{u8, u8}
-impl_bitrange_for_u!{u16, u8}
-impl_bitrange_for_u!{u16, u16}
-impl_bitrange_for_u!{u32, u8}
-impl_bitrange_for_u!{u32, u16}
-impl_bitrange_for_u!{u32, u32}
-impl_bitrange_for_u!{u64, u8}
-impl_bitrange_for_u!{u64, u16}
-impl_bitrange_for_u!{u64, u32}
-impl_bitrange_for_u!{u64, u64}
-impl_bitrange_for_u!{u128, u8}
-impl_bitrange_for_u!{u128, u16}
-impl_bitrange_for_u!{u128, u32}
-impl_bitrange_for_u!{u128, u64}
-impl_bitrange_for_u!{u128, u128}
+macro_rules! impl_bitrange_for_u_combinations {
+((),($($bitrange_ty:ty),*)) => {
 
-impl_bitrange_for_u!{u8, i8}
-impl_bitrange_for_u!{u16, i8}
-impl_bitrange_for_u!{u16, i16}
-impl_bitrange_for_u!{u32, i8}
-impl_bitrange_for_u!{u32, i16}
-impl_bitrange_for_u!{u32, i32}
-impl_bitrange_for_u!{u64, i8}
-impl_bitrange_for_u!{u64, i16}
-impl_bitrange_for_u!{u64, i32}
-impl_bitrange_for_u!{u64, i64}
-impl_bitrange_for_u!{u128, i8}
-impl_bitrange_for_u!{u128, i16}
-impl_bitrange_for_u!{u128, i32}
-impl_bitrange_for_u!{u128, i64}
-impl_bitrange_for_u!{u128, i128}
+};
+(($t:ty),($($bitrange_ty:ty),*)) => {
+        $(impl_bitrange_for_u!{$t, $bitrange_ty})*
+};
+    (($t_head:ty, $($t_rest:ty),*),($($bitrange_ty:ty),*)) => {
+        impl_bitrange_for_u_combinations!{($t_head), ($($bitrange_ty),*)}
+        impl_bitrange_for_u_combinations!{($($t_rest),*), ($($bitrange_ty),*)}
+    };
+}
+
+impl_bitrange_for_u_combinations!{(u8, u16, u32, u64, u128), (u8, u16, u32, u64, u128)}
+impl_bitrange_for_u_combinations!{(u8, u16, u32, u64, u128), (i8, i16, i32, i64, i128)}

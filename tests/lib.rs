@@ -54,6 +54,8 @@ bitfield! {
     signed_two_bits, set_signed_two_bits: 1, 0;
     signed_eight_bits, set_signed_eight_bits: 7, 0;
     signed_eight_bits_unaligned, set_signed_eight_bits_unaligned: 8, 1;
+    u128, u128_getter, set_u128: 8, 1;
+    i128, i128_getter, set_i128: 8, 1;
 }
 
 impl FooBar {
@@ -386,6 +388,9 @@ fn test_field_type() {
     let _: i8 = fb.signed_two_bits();
     let _: i8 = fb.signed_eight_bits();
     let _: i8 = fb.signed_eight_bits_unaligned();
+
+    let _: u128 = fb.u128_getter();
+    let _: i128 = fb.i128_getter();
 }
 
 #[test]
@@ -418,7 +423,7 @@ fn test_debug() {
                     , all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0)\
                     , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], \
                     signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, \
-                    signed_eight_bits_unaligned: 105 }";
+                    signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 
