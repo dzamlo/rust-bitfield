@@ -74,7 +74,7 @@
 /// }
 /// # }
 /// ```
-#[macro_export]
+#[macro_export(local_inner_macros)]
 macro_rules! bitfield_fields {
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, _, $setter:ident: $msb:expr,
      $lsb:expr, $count:expr) => {
@@ -83,7 +83,7 @@ macro_rules! bitfield_fields {
         #[allow(eq_op)]
         $($vis)* fn $setter(&mut self, index: usize, value: $t) {
             use $crate::BitRange;
-            debug_assert!(index < $count);
+            __bitfield_debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
             let lsb = $lsb + index*width;
             let msb = lsb + width - 1;
@@ -112,7 +112,7 @@ macro_rules! bitfield_fields {
         #[allow(eq_op)]
         $($vis)* fn $getter(&self, index: usize) -> $into {
             use $crate::BitRange;
-            debug_assert!(index < $count);
+            __bitfield_debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
             let lsb = $lsb + index*width;
             let msb = lsb + width - 1;
@@ -247,11 +247,11 @@ macro_rules! bitfield_fields {
 
 /// }
 /// ```
-#[macro_export]
+#[macro_export(local_inner_macros)]
 macro_rules! bitfield_debug {
     (struct $name:ident; $($rest:tt)*) => {
         fn fmt(&self, f: &mut $crate::fmt::Formatter) -> $crate::fmt::Result {
-            let mut debug_struct = f.debug_struct(stringify!($name));
+            let mut debug_struct = f.debug_struct(__bitfield_stringify!($name));
             debug_struct.field(".0", &self.0);
             bitfield_debug!{debug_struct, self, $($rest)*}
             debug_struct.finish()
@@ -275,12 +275,12 @@ macro_rules! bitfield_debug {
         for (i, e) in (&mut array).into_iter().enumerate() {
             *e = $self.$getter(i);
         }
-        $debug_struct.field(stringify!($getter), &array);
+        $debug_struct.field(__bitfield_stringify!($getter), &array);
         bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $($exprs:expr),*; $($rest:tt)*)
         => {
-        $debug_struct.field(stringify!($getter), &$self.$getter());
+        $debug_struct.field(__bitfield_stringify!($getter), &$self.$getter());
         bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, into $into:ty, $($rest:tt)*) => {
@@ -323,7 +323,7 @@ macro_rules! bitfield_debug {
 /// bitfield_bitrange!{struct BitField3(MSB0 [u8])}
 /// ```
 ///
-#[macro_export]
+#[macro_export(local_inner_macros)]
 macro_rules! bitfield_bitrange {
     (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
         impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
@@ -469,7 +469,7 @@ macro_rules! bitfield_bitrange {
 ///     }
 /// }
 /// ```
-#[macro_export]
+#[macro_export(local_inner_macros)]
 macro_rules! bitfield {
     ($(#[$attribute:meta])* pub struct $($rest:tt)*) => {
         bitfield!($(#[$attribute])* (pub) struct $($rest)*);
@@ -616,3 +616,23 @@ macro_rules! impl_bitrange_for_u_combinations {
 
 impl_bitrange_for_u_combinations!{(u8, u16, u32, u64, u128), (u8, u16, u32, u64, u128)}
 impl_bitrange_for_u_combinations!{(u8, u16, u32, u64, u128), (i8, i16, i32, i64, i128)}
+
+// Same as std::stringify but callable from local_inner_macros macros defined inside
+// this crate.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __bitfield_stringify {
+    ($s:ident) => {
+        stringify!($s)
+    }
+}
+
+// Same as std::debug_assert but callable from local_inner_macros macros defined inside
+// this crate.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __bitfield_debug_assert {
+    ($e:expr) => {
+        debug_assert!($e)
+    }
+}
