@@ -332,7 +332,7 @@ macro_rules! bitfield_bitrange {
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
                     let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                     let mut value = 0;
-                    for i in (lsb..msb+1).rev() {
+                    for i in (lsb..=msb).rev() {
                         value <<= 1;
                         value |= ((self.0.as_ref()[i/bit_len] >> (i%bit_len)) & 1) as $bitrange_ty;
                     }
@@ -342,7 +342,7 @@ macro_rules! bitfield_bitrange {
                 fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
                     let mut value = value;
-                    for i in lsb..msb+1 {
+                    for i in lsb..=msb {
                         self.0.as_mut()[i/bit_len] &= !(1 << (i%bit_len));
                         self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty << (i%bit_len);
                         value >>= 1;
@@ -357,7 +357,7 @@ macro_rules! bitfield_bitrange {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                 let mut value = 0;
-                for i in lsb..msb+1 {
+                for i in lsb..=msb {
                     value <<= 1;
                     value |= ((self.0.as_ref()[i/bit_len] >> (bit_len - i%bit_len - 1)) & 1)
                         as $bitrange_ty;
@@ -368,7 +368,7 @@ macro_rules! bitfield_bitrange {
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let mut value = value;
-                for i in (lsb..msb+1).rev() {
+                for i in (lsb..=msb).rev() {
                     self.0.as_mut()[i/bit_len] &= !(1 << (bit_len - i%bit_len - 1));
                     self.0.as_mut()[i/bit_len] |= (value & 1) as $slice_ty
                         << (bit_len - i%bit_len - 1);
