@@ -624,7 +624,7 @@ impl_bitrange_for_u_combinations!{(u8, u16, u32, u64, u128), (i8, i16, i32, i64,
 macro_rules! __bitfield_stringify {
     ($s:ident) => {
         stringify!($s)
-    }
+    };
 }
 
 // Same as std::debug_assert but callable from local_inner_macros macros defined inside
@@ -634,5 +634,5 @@ macro_rules! __bitfield_stringify {
 macro_rules! __bitfield_debug_assert {
     ($e:expr) => {
         debug_assert!($e)
-    }
+    };
 }
