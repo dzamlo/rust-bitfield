@@ -71,41 +71,44 @@
 ///     // `field3` will be read as an `u32` and then converted to `FooBar`.
 ///     // The setter is not affected, it still need an `u32` value.
 ///     u32, into FooBar, field3, set_field3: 10, 0;
+///     // `field4` will be read as an `u32` and then converted to `FooBar`.
+///     // The setter will take a `FooBar`, and converted back to an `u32`.
+///     u32, from into FooBar, field4, set_field4: 10, 0;
 /// }
 /// # }
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_fields {
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, _, $setter:ident: $msb:expr,
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
      $lsb:expr, $count:expr) => {
         $(#[$attribute])*
         #[allow(unknown_lints)]
         #[allow(eq_op)]
-        $($vis)* fn $setter(&mut self, index: usize, value: $t) {
+        $($vis)* fn $setter(&mut self, index: usize, value: $from) {
             use $crate::BitRange;
             __bitfield_debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
             let lsb = $lsb + index*width;
             let msb = lsb + width - 1;
-            self.set_bit_range(msb, lsb, value);
+            self.set_bit_range(msb, lsb, $crate::Into::<$t>::into(value));
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, _, $setter:ident: $msb:expr,
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
      $lsb:expr) => {
         $(#[$attribute])*
-        $($vis)* fn $setter(&mut self, value: $t) {
+        $($vis)* fn $setter(&mut self, value: $from) {
             use $crate::BitRange;
-            self.set_bit_range($msb, $lsb, value);
+            self.set_bit_range($msb, $lsb, $crate::Into::<$t>::into(value));
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, _, $setter:ident: $bit:expr) => {
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $bit:expr) => {
         $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: bool) {
             use $crate::Bit;
             self.set_bit($bit, value);
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, $getter:ident, _: $msb:expr,
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
      $lsb:expr, $count:expr) => {
         $(#[$attribute])*
         #[allow(unknown_lints)]
@@ -120,7 +123,7 @@ macro_rules! bitfield_fields {
             $crate::Into::into(raw_value)
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, $getter:ident, _: $msb:expr,
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
      $lsb:expr) => {
         $(#[$attribute])*
         $($vis)* fn $getter(&self) -> $into {
@@ -129,17 +132,17 @@ macro_rules! bitfield_fields {
             $crate::Into::into(raw_value)
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, $getter:ident, _: $bit:expr) => {
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $bit:expr) => {
         $(#[$attribute])*
         $($vis)* fn $getter(&self) -> bool {
             use $crate::Bit;
             self.bit($bit)
         }
     };
-    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $into:ty, $getter:ident, $setter:ident:
+    (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, $setter:ident:
      $($exprs:expr),*) => {
-        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $into, $getter, _: $($exprs),*);
-        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $into, _, $setter: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $t, $into, $getter, _: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $t, $into, _, $setter: $($exprs),*);
     };
 
     ($t:ty;) => {};
@@ -152,49 +155,72 @@ macro_rules! bitfield_fields {
     ($default_ty:ty; ($(#[$attributes:meta])*) #[$attribute:meta] $($rest:tt)*) => {
         bitfield_fields!{$default_ty; ($(#[$attributes])* #[$attribute]) $($rest)*}
     };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $into, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
+    };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $t, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{@field $(#[$attribute])* (pub) $t, $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($default_ty:ty; ($(#[$attribute:meta])*) pub from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $into, $into, $getter, $setter:
+                         $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $into, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $default_ty, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) pub $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $default_ty, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* (pub) $default_ty, $default_ty, $default_ty, $getter, $setter:
                                 $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
+    };
+
+    ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{@field $(#[$attribute])* () $t, $into, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
 
     ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* () $t, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{@field $(#[$attribute])* () $t, $t, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
 
     ($default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* () $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{@field $(#[$attribute])* () $t, $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{$default_ty; $($rest)*}
+    };
+    ($default_ty:ty; ($(#[$attribute:meta])*) from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $into, $into, $getter, $setter:
+                         $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $into, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $default_ty, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
     ($default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $default_ty, $getter, $setter:
+        bitfield_fields!{@field $(#[$attribute])* () $default_ty, $default_ty, $default_ty, $getter, $setter:
                                 $($exprs),*}
         bitfield_fields!{$default_ty; $($rest)*}
     };
@@ -281,6 +307,9 @@ macro_rules! bitfield_debug {
     ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $($exprs:expr),*; $($rest:tt)*)
         => {
         $debug_struct.field(__bitfield_stringify!($getter), &$self.$getter());
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
+    };
+    ($debug_struct:ident, $self:ident, from into $into:ty, $($rest:tt)*) => {
         bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, into $into:ty, $($rest:tt)*) => {
