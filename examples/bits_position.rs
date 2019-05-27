@@ -4,11 +4,11 @@ extern crate bitfield;
 use bitfield::Bit;
 use bitfield::BitRange;
 
-bitfield!{
+bitfield! {
     struct BitsLocations([u8]);
 }
 
-bitfield!{
+bitfield! {
     struct BitsLocationsMsb0(MSB0 [u8]);
 }
 

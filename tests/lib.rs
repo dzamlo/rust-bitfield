@@ -61,12 +61,12 @@ bitfield! {
 }
 
 impl FooBar {
-    bitfield_fields!{
+    bitfield_fields! {
         // Boolean field don't need a type
         foo7, _: 1;
     }
 
-    bitfield_fields!{
+    bitfield_fields! {
         // If all fields have a type, we don't need to specify a default type
         u8, foo8,_: 1, 0;
         u32, foo9, _: 2, 0;
@@ -81,7 +81,7 @@ impl FooBar {
     }
 
     // Check if an empty bitfield_fields compiles without errors.
-    bitfield_fields!{}
+    bitfield_fields! {}
 }
 
 #[test]
@@ -770,7 +770,7 @@ mod test_types {
     struct Foo;
 
     impl Foo {
-        bitfield_fields!{
+        bitfield_fields! {
             std::sync::atomic::AtomicUsize, field1, set_field1: 0, 0;
             std::sync::atomic::AtomicUsize;
             field2, set_field2: 0, 0;
@@ -857,7 +857,7 @@ mod test_no_default_bitrange {
     use std::fmt::Debug;
     use std::fmt::Error;
     use std::fmt::Formatter;
-    bitfield!{
+    bitfield! {
       #[derive(Eq, PartialEq)]
       pub struct BitField1(u16);
       no default BitRange;
@@ -889,7 +889,7 @@ mod test_no_default_bitrange {
         assert_eq!(bf, BitField1(10 + 0 + 42));
     }
 
-    bitfield!{
+    bitfield! {
       pub struct BitField2(u16);
       no default BitRange;
       u8;
@@ -930,7 +930,7 @@ mod test_no_default_bitrange {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
-    bitfield!{
+    bitfield! {
       #[derive(Eq, PartialEq)]
       pub struct BitField4([u16]);
       no default BitRange;
@@ -948,7 +948,7 @@ mod test_no_default_bitrange {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
-    bitfield!{
+    bitfield! {
       pub struct BitField5([u16]);
       no default BitRange;
       u8;
@@ -989,7 +989,7 @@ mod test_no_default_bitrange {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
-    bitfield!{
+    bitfield! {
       #[derive(Eq, PartialEq)]
       pub struct BitField7(MSB0 [u16]);
       no default BitRange;
@@ -1007,7 +1007,7 @@ mod test_no_default_bitrange {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
-    bitfield!{
+    bitfield! {
       pub struct BitField8(MSB0 [u16]);
       no default BitRange;
       u8;

@@ -5,7 +5,7 @@ extern crate bitfield;
 
 use std::net::Ipv4Addr;
 
-bitfield!{
+bitfield! {
     struct IpV4Header(MSB0 [u8]);
     impl Debug;
     u32;
