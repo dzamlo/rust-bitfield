@@ -59,6 +59,7 @@
 /// # struct FooBar(u64);
 /// # bitfield_bitrange!{struct FooBar(u64)}
 /// # impl From<u32> for FooBar{ fn from(_: u32) -> FooBar {unimplemented!()}}
+/// # impl From<FooBar> for u32{ fn from(_: FooBar) -> u32 {unimplemented!()}}
 /// # impl FooBar {
 /// bitfield_fields!{
 ///     // The default type will be `u64
@@ -141,8 +142,8 @@ macro_rules! bitfield_fields {
     };
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, $setter:ident:
      $($exprs:expr),*) => {
-        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $t, $into, $getter, _: $($exprs),*);
-        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $t, $into, _, $setter: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $from, $into, $getter, _: $($exprs),*);
+        bitfield_fields!(@field $(#[$attribute])* ($($vis)*) $t, $from, $into, _, $setter: $($exprs),*);
     };
 
     ($t:ty;) => {};

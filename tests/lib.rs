@@ -15,6 +15,12 @@ impl From<u8> for Foo {
     }
 }
 
+impl From<Foo> for u8 {
+    fn from(value: Foo) -> u8 {
+        value.0 as u8
+    }
+}
+
 bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
@@ -39,18 +45,19 @@ bitfield! {
     _, setter_only_array: 2*THREE, 4, 3;
     all_bits, set_all_bits: 31, 0;
     single_bit, set_single_bit: 3;
-    #[allow(dead_code)]
     u8, into Foo, into_foo1, set_into_foo1: 31, 31;
-    #[allow(dead_code)]
     pub u8, into Foo, into_foo2, set_into_foo2: 31, 31;
+    u8, from into Foo, from_foo1, set_from_foo1: 31, 31;
+    u8, from into Foo, _, set_from_foo2: 31, 31;
     u8;
-    #[allow(dead_code)]
     into Foo, into_foo3, set_into_foo3: 31, 31;
-    #[allow(dead_code)]
     pub into Foo, into_foo4, set_into_foo4: 31, 31;
-    #[allow(dead_code)]
     into Foo, _, set_into_foo5: 31, 31;
     into Foo, into_foo6, _: 29, 29, 3;
+    from into Foo, from_foo3, set_from_foo3: 31, 31;
+    from into Foo, _, set_from_foo4: 31, 31;
+    from into Foo, from_foo5, set_from_foo5: 29, 29, 3;
+    from into Foo, from_foo6, _: 31, 31;
     i8;
     signed_single_bit, set_signed_single_bit: 0, 0;
     signed_two_bits, set_signed_two_bits: 1, 0;
@@ -386,6 +393,10 @@ fn test_field_type() {
     let _: Foo = fb.into_foo4();
     let _: Foo = fb.into_foo6(0);
 
+    let _: Foo = fb.from_foo1();
+    let _: Foo = fb.from_foo3();
+    let _: Foo = fb.from_foo5(0);
+
     let _: i8 = fb.signed_single_bit();
     let _: i8 = fb.signed_two_bits();
     let _: i8 = fb.signed_eight_bits();
@@ -393,6 +404,46 @@ fn test_field_type() {
 
     let _: u128 = fb.u128_getter();
     let _: i128 = fb.i128_getter();
+}
+
+#[test]
+fn test_into_setter() {
+    let mut fb = FooBar(0);
+
+    // We just check that the parameter type is correct
+    fb.set_into_foo1(0u8);
+    fb.set_into_foo2(0u8);
+    fb.set_into_foo3(0u8);
+    fb.set_into_foo4(0u8);
+}
+
+#[test]
+fn test_from_setter() {
+    let mut fb = FooBar(0);
+    assert_eq!(0, fb.0);
+
+    fb.set_from_foo1(Foo(1));
+    assert_eq!(1 << 31, fb.0);
+    fb.set_from_foo1(Foo(0));
+    assert_eq!(0, fb.0);
+
+    fb.set_from_foo2(Foo(1));
+    assert_eq!(1 << 31, fb.0);
+    fb.set_from_foo2(Foo(0));
+    assert_eq!(0, fb.0);
+
+    fb.set_from_foo3(Foo(1));
+    assert_eq!(1 << 31, fb.0);
+    fb.set_from_foo3(Foo(0));
+    assert_eq!(0, fb.0);
+
+    fb.set_from_foo4(Foo(1));
+    assert_eq!(1 << 31, fb.0);
+    fb.set_from_foo4(Foo(0));
+    assert_eq!(0, fb.0);
+
+    fb.set_from_foo5(1, Foo(1));
+    assert_eq!(1 << 30, fb.0);
 }
 
 #[test]
@@ -419,13 +470,7 @@ fn test_is_copy() {
 #[test]
 fn test_debug() {
     let fb = FooBar(1_234_567_890);
-    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0\
-                    , 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0\
-                    , 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1]\
-                    , all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0)\
-                    , into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], \
-                    signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, \
-                    signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
+    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 
