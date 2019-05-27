@@ -605,8 +605,7 @@ macro_rules! impl_bitrange_for_u {
     ($t:ty, $bitrange_ty:ty) => {
         impl BitRange<$bitrange_ty> for $t {
             #[inline]
-            #[allow(unknown_lints)]
-            #[allow(cast_lossless)]
+            #[allow(clippy::cast_lossless)]
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                 let bit_len = size_of::<$t>()*8;
                 let result_bit_len = size_of::<$bitrange_ty>()*8;
@@ -616,8 +615,7 @@ macro_rules! impl_bitrange_for_u {
             }
 
             #[inline]
-            #[allow(unknown_lints)]
-            #[allow(cast_lossless)]
+            #[allow(clippy::cast_lossless)]
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                 let bit_len = size_of::<$t>()*8;
                 let mask: $t = !(0 as $t)

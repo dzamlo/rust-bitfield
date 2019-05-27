@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+ - The minimum rustc version is now 1.31.0
+
 ## [0.13.2] - 2019-05-28
 
 ### Added

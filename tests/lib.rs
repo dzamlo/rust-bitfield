@@ -1,4 +1,5 @@
 #![recursion_limit = "128"]
+#![allow(clippy::cognitive_complexity)]
 
 #[macro_use]
 extern crate bitfield;
@@ -233,9 +234,8 @@ fn test_array_field2() {
     assert_eq!(7, fb.foo6(2));
 }
 
-#[allow(unknown_lints)]
-#[allow(identity_op)]
-#[allow(erasing_op)]
+#[allow(clippy::identity_op)]
+#[allow(clippy::erasing_op)]
 #[test]
 fn test_setter_only_array() {
     let mut fb = FooBar(0);
@@ -922,8 +922,7 @@ mod test_no_default_bitrange {
         }
     }
 
-    #[allow(unknown_lints)]
-    #[allow(identity_op)]
+    #[allow(clippy::identity_op)]
     #[test]
     fn custom_bitrange_implementation_is_used() {
         let mut bf = BitField1(0);
