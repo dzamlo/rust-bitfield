@@ -20,7 +20,7 @@ bitfield! {
     get_fragment_offset, _: 63, 51;
     get_time_to_live, _: 71, 64;
     get_protocol, _: 79, 72;
-    get_header_checksum, _: 95, 79;
+    get_header_checksum, _: 95, 80;
     u8, get_source_address, _: 103, 96, 4;
     u32, into Ipv4Addr, get_destination_address, _: 159, 128;
 }
