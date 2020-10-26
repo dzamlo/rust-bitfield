@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate bitfield;
 
-use bitfield::Bit;
-use bitfield::BitRange;
+use bitfield::BitMut;
+use bitfield::BitRangeMut;
 
 bitfield! {
     struct BitsLocations([u8]);

@@ -86,7 +86,7 @@ macro_rules! bitfield_fields {
         #[allow(unknown_lints)]
         #[allow(eq_op)]
         $($vis)* fn $setter(&mut self, index: usize, value: $from) {
-            use $crate::BitRange;
+            use $crate::BitRangeMut;
             __bitfield_debug_assert!(index < $count);
             let width = $msb - $lsb + 1;
             let lsb = $lsb + index*width;
@@ -98,14 +98,14 @@ macro_rules! bitfield_fields {
      $lsb:expr) => {
         $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: $from) {
-            use $crate::BitRange;
+            use $crate::BitRangeMut;
             self.set_bit_range($msb, $lsb, $crate::Into::<$t>::into(value));
         }
     };
     (@field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $bit:expr) => {
         $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: bool) {
-            use $crate::Bit;
+            use $crate::BitMut;
             self.set_bit($bit, value);
         }
     };
@@ -322,7 +322,7 @@ macro_rules! bitfield_debug {
     ($debug_struct:ident, $self:ident, ) => {};
 }
 
-/// Implements `BitRange` for a tuple struct (or "newtype").
+/// Implements `BitRange` and `BitRangeMut` for a tuple struct (or "newtype").
 ///
 /// This macro will generate an implementation of the `BitRange` trait for an existing single
 /// element tuple struct.
@@ -332,7 +332,7 @@ macro_rules! bitfield_debug {
 ///
 /// The difference with a normal "newtype" is the type in parentheses. If the type is `[t]` (where
 /// `t` is any of the unsigned integer type), the "newtype" will be generic and implement
-/// `BitRange` for `T: AsMut<[t]> + AsRef<[t]>` (for example a slice, an array or a `Vec`). You can
+/// `BitRange` for `T: AsRef<[t]>` and `BitRangeMut` for `T: AsMut<[t]>` (for example a slice, an array or a `Vec`). You can
 /// also use `MSB0 [t]`. The difference will be the positions of the bit. You can use the
 /// `bits_positions` example to see where each bits is. If the type is neither of this two, the
 /// "newtype" will wrap a value of the specified type and implements `BitRange` the same ways as
@@ -356,7 +356,7 @@ macro_rules! bitfield_debug {
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_bitrange {
     (@impl_bitrange_slice $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
-        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
+        impl<T: AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
             for $name<T> {
                 fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
@@ -368,6 +368,9 @@ macro_rules! bitfield_bitrange {
                     }
                     value << (value_bit_len - (msb - lsb + 1)) >> (value_bit_len - (msb - lsb + 1))
                 }
+        }
+        impl<T: AsMut<[$slice_ty]>> $crate::BitRangeMut<$bitrange_ty>
+            for $name<T> {
 
                 fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
@@ -381,7 +384,7 @@ macro_rules! bitfield_bitrange {
             }
     };
     (@impl_bitrange_slice_msb0 $name:ident, $slice_ty:ty, $bitrange_ty:ty) => {
-        impl<T: AsMut<[$slice_ty]> + AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
+        impl<T: AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
             for $name<T> {
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
@@ -394,7 +397,9 @@ macro_rules! bitfield_bitrange {
                 }
                 value << (value_bit_len - (msb - lsb + 1)) >> (value_bit_len - (msb - lsb + 1))
             }
-
+        }
+        impl<T: AsMut<[$slice_ty]>> $crate::BitRangeMut<$bitrange_ty>
+            for $name<T> {
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let mut value = value;
@@ -436,6 +441,8 @@ macro_rules! bitfield_bitrange {
             fn bit_range(&self, msb: usize, lsb: usize) -> T {
                 self.0.bit_range(msb, lsb)
             }
+        }
+        impl<T> $crate::BitRangeMut<T> for $name where $t: $crate::BitRangeMut<T> {
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T) {
                 self.0.set_bit_range(msb, lsb, value);
             }
@@ -475,10 +482,10 @@ macro_rules! bitfield_bitrange {
 /// }
 /// ```
 ///
-/// or with a custom `BitRange` implementation :
+/// or with a custom `BitRange` and `BitRangeMut` implementation :
 /// ```rust
 /// # #[macro_use] extern crate bitfield;
-/// # use bitfield::BitRange;
+/// # use bitfield::{BitRange, BitRangeMut};
 /// # fn main() {}
 /// bitfield!{
 ///   pub struct BitField1(u16);
@@ -494,6 +501,8 @@ macro_rules! bitfield_bitrange {
 ///         let mask = (1 << width) - 1;
 ///         ((self.0 >> lsb) & mask) as u8
 ///     }
+/// }
+/// impl BitRangeMut<u8> for BitField1 {
 ///     fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
 ///         self.0 = (value as u16) << lsb;
 ///     }
@@ -573,21 +582,30 @@ pub use core::fmt;
 #[doc(hidden)]
 pub use core::mem::size_of;
 
-/// A trait to get or set ranges of bits.
+/// A trait to get ranges of bits.
 pub trait BitRange<T> {
     /// Get a range of bits.
     fn bit_range(&self, msb: usize, lsb: usize) -> T;
+}
+
+/// A trait to set ranges of bits.
+pub trait BitRangeMut<T> {
     /// Set a range of bits.
     fn set_bit_range(&mut self, msb: usize, lsb: usize, value: T);
 }
 
-/// A trait to get or set a single bit.
+/// A trait to get a single bit.
 ///
 /// This trait is implemented for all type that implement `BitRange<u8>`.
 pub trait Bit {
     /// Get a single bit.
     fn bit(&self, bit: usize) -> bool;
+}
 
+/// A trait to set a single bit.
+///
+/// This trait is implemented for all type that implement `BitRangeMut<u8>`.
+pub trait BitMut {
     /// Set a single bit.
     fn set_bit(&mut self, bit: usize, value: bool);
 }
@@ -596,6 +614,9 @@ impl<T: BitRange<u8>> Bit for T {
     fn bit(&self, bit: usize) -> bool {
         self.bit_range(bit, bit) != 0
     }
+}
+
+impl<T: BitRangeMut<u8>> BitMut for T {
     fn set_bit(&mut self, bit: usize, value: bool) {
         self.set_bit_range(bit, bit, value as u8);
     }
@@ -613,7 +634,9 @@ macro_rules! impl_bitrange_for_u {
                     as $bitrange_ty;
                 result << (result_bit_len - (msb - lsb + 1)) >> (result_bit_len - (msb - lsb + 1))
             }
+        }
 
+        impl BitRangeMut<$bitrange_ty> for $t {
             #[inline]
             #[allow(clippy::cast_lossless)]
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {

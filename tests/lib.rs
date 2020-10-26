@@ -772,7 +772,6 @@ mod some_module {
         pub u32, field11, set_field11: 1, 1;
         pub u32, field12, set_field12: 1, 1, 1;
     }
-
 }
 
 #[test]
@@ -808,7 +807,7 @@ fn field_can_be_public() {
 // in most of the possible ways.
 #[allow(dead_code)]
 mod test_types {
-    use bitfield::BitRange;
+    use bitfield::{BitRange, BitRangeMut};
     use std;
     use std::sync::atomic::{self, AtomicUsize};
 
@@ -853,6 +852,9 @@ mod test_types {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> AtomicUsize {
             AtomicUsize::new(0)
         }
+    }
+
+    impl BitRangeMut<AtomicUsize> for Foo {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: AtomicUsize) {}
     }
 
@@ -860,6 +862,9 @@ mod test_types {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> Vec<AtomicUsize> {
             vec![AtomicUsize::new(0)]
         }
+    }
+
+    impl BitRangeMut<Vec<AtomicUsize>> for Foo {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: Vec<AtomicUsize>) {}
     }
 
@@ -867,6 +872,9 @@ mod test_types {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> &'a str {
             ""
         }
+    }
+
+    impl<'a> BitRangeMut<&'a str> for Foo {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: &'a str) {}
     }
 
@@ -898,7 +906,7 @@ mod test_types {
 
 #[allow(dead_code)]
 mod test_no_default_bitrange {
-    use bitfield::BitRange;
+    use bitfield::{BitRange, BitRangeMut};
     use std::fmt::Debug;
     use std::fmt::Error;
     use std::fmt::Formatter;
@@ -917,6 +925,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, msb: usize, lsb: usize) -> u8 {
             (msb + lsb) as u8
         }
+    }
+
+    impl BitRangeMut<u8> for BitField1 {
         fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
             self.0 = msb as u16 + lsb as u16 + u16::from(value)
         }
@@ -946,6 +957,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl BitRangeMut<u8> for BitField2 {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -971,6 +985,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl BitRangeMut<u8> for BitField3 {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -989,6 +1006,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField4<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -1005,6 +1025,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField5<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -1030,6 +1053,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField6<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -1048,6 +1074,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField7<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -1064,6 +1093,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField8<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
@@ -1089,6 +1121,9 @@ mod test_no_default_bitrange {
         fn bit_range(&self, _msb: usize, _lsb: usize) -> u8 {
             0
         }
+    }
+
+    impl<T> BitRangeMut<u8> for BitField9<T> {
         fn set_bit_range(&mut self, _msb: usize, _lsb: usize, _value: u8) {}
     }
 
