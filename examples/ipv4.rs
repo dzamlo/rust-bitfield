@@ -25,7 +25,7 @@ bitfield! {
     u32, into Ipv4Addr, get_destination_address, _: 159, 128;
 }
 
-impl<T: AsRef<[u8]> + AsMut<[u8]>> IpV4Header<T> {
+impl<T: AsRef<[u8]>> IpV4Header<T> {
     fn get_source_as_ip_addr(&self) -> Ipv4Addr {
         let mut src = [0; 4];
         for (i, src) in src.iter_mut().enumerate() {
