@@ -100,35 +100,35 @@ fn test_single_bit() {
     assert_eq!(0x1, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x0, fb.foo2());
-    assert_eq!(false, fb.single_bit());
+    assert!(!fb.single_bit());
     assert_eq!(-1, fb.signed_single_bit());
 
     fb.set_foo2(1);
     assert_eq!(0x8000_0001, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x1, fb.foo2());
-    assert_eq!(false, fb.single_bit());
+    assert!(!fb.single_bit());
     assert_eq!(-1, fb.signed_single_bit());
 
     fb.set_foo1(0);
     assert_eq!(0x8000_0000, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
-    assert_eq!(false, fb.single_bit());
+    assert!(!fb.single_bit());
     assert_eq!(0, fb.signed_single_bit());
 
     fb.set_single_bit(true);
     assert_eq!(0x8000_0008, fb.0);
     assert_eq!(0x0, fb.foo1());
     assert_eq!(0x1, fb.foo2());
-    assert_eq!(true, fb.single_bit());
+    assert!(fb.single_bit());
     assert_eq!(0, fb.signed_single_bit());
 
     fb.set_signed_single_bit(-1);
     assert_eq!(0x8000_0009, fb.0);
     assert_eq!(0x1, fb.foo1());
     assert_eq!(0x1, fb.foo2());
-    assert_eq!(true, fb.single_bit());
+    assert!(fb.single_bit());
     assert_eq!(-1, fb.signed_single_bit());
 }
 
@@ -939,7 +939,7 @@ mod test_no_default_bitrange {
         let mut bf = BitField1(0);
         assert_eq!(bf.field1(), 10 + 0);
         assert_eq!(bf.field2(), 12 + 3);
-        assert_eq!(bf.field3(), true);
+        assert!(bf.field3());
         bf.set_field1(42);
         assert_eq!(bf, BitField1(10 + 0 + 42));
     }
