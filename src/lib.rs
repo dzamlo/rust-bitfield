@@ -79,7 +79,45 @@
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_fields {
-    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, _, $setter:ident: $($exprs:expr),*) => {
+        bitfield_fields!(only mask; @field $(#[$attribute])* ($($vis)*) $t, $mask($mask_t): $($exprs),*);
+    };
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, _: $($exprs:expr),*) => {
+        bitfield_fields!(only mask; @field $(#[$attribute])* ($($vis)*) $t, $mask($mask_t): $($exprs),*);
+    };
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, __NO_MASK_FOR_FIELD($mask_t:ty): $($exprs:expr),*) => {};
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty): $bit:expr) => {
+        $($vis)* const $mask: $mask_t = 1 << $bit;
+    };
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty): $msb:expr, $lsb:expr) => {
+        $($vis)* const $mask: $mask_t = {
+            let msb = $msb;
+            let lsb = $lsb;
+            let mut i = lsb;
+            let mut acc = 0;
+            while i <= msb {
+                acc |= 1<<i;
+                i += 1;
+            }
+            acc
+        };
+    };
+    (only mask; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty): $msb:expr, $lsb:expr, $count:expr) => {
+        $($vis)* const $mask: $mask_t = {
+            let msb = $msb;
+            let lsb = $lsb;
+            let width = msb - lsb;
+            let full_msb = msb + width * $count;
+            let mut i = lsb;
+            let mut acc = 0;
+            while i <= full_msb {
+                acc |= 1<<i;
+                i += 1;
+            }
+            acc
+        };
+    };
+    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, _, $setter:ident: $msb:expr,
      $lsb:expr, $count:expr) => {
         $(#[$attribute])*
         #[allow(unknown_lints)]
@@ -93,7 +131,7 @@ macro_rules! bitfield_fields {
             self.set_bit_range(msb, lsb, $crate::Into::<$t>::into(value));
         }
     };
-    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $msb:expr,
+    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, _, $setter:ident: $msb:expr,
      $lsb:expr) => {
         $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: $from) {
@@ -101,17 +139,16 @@ macro_rules! bitfield_fields {
             self.set_bit_range($msb, $lsb, $crate::Into::<$t>::into(value));
         }
     };
-    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $bit:expr) => {
+    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, _, $setter:ident: $bit:expr) => {
         $(#[$attribute])*
         $($vis)* fn $setter(&mut self, value: bool) {
             use $crate::BitMut;
             self.set_bit($bit, value);
         }
     };
-    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, _, $setter:ident: $($exprs:expr),*) => {};
+    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, _, $setter:ident: $($exprs:expr),*) => {};
 
-    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
-     $lsb:expr, $count:expr) => {
+    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, _: $msb:expr, $lsb:expr, $count:expr) => {
         $(#[$attribute])*
         #[allow(unknown_lints)]
         #[allow(eq_op)]
@@ -125,7 +162,7 @@ macro_rules! bitfield_fields {
             $crate::Into::into(raw_value)
         }
     };
-    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $msb:expr,
+    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, _: $msb:expr,
      $lsb:expr) => {
         $(#[$attribute])*
         $($vis)* fn $getter(&self) -> $into {
@@ -134,19 +171,19 @@ macro_rules! bitfield_fields {
             $crate::Into::into(raw_value)
         }
     };
-    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $bit:expr) => {
+    (only getter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, _: $bit:expr) => {
         $(#[$attribute])*
         $($vis)* fn $getter(&self) -> bool {
             use $crate::Bit;
             self.bit($bit)
         }
     };
-    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, _: $($exprs:expr),*) => {};
+    (only setter; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, _: $($exprs:expr),*) => {};
 
-    (only $only:tt; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $from:ty, $into:ty, $getter:ident, $setter:ident:
+    (only $only:tt; @field $(#[$attribute:meta])* ($($vis:tt)*) $t:ty, $mask:ident($mask_t:ty), $from:ty, $into:ty, $getter:ident, $setter:ident:
      $($exprs:expr),*) => {
-        bitfield_fields!(only $only; @field $(#[$attribute])* ($($vis)*) $t, $from, $into, $getter, _: $($exprs),*);
-        bitfield_fields!(only $only; @field $(#[$attribute])* ($($vis)*) $t, $from, $into, _, $setter: $($exprs),*);
+        bitfield_fields!(only $only; @field $(#[$attribute])* ($($vis)*) $t, $mask($mask_t), $from, $into, $getter, _: $($exprs),*);
+        bitfield_fields!(only $only; @field $(#[$attribute])* ($($vis)*) $t, __NO_MASK_FOR_FIELD(u8), $from, $into, _, $setter: $($exprs),*);
     };
 
     (only $only:tt; $t:ty;) => {};
@@ -161,70 +198,105 @@ macro_rules! bitfield_fields {
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, from into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, $into, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, __NO_MASK_FOR_FIELD(u8), $into, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, $t, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, __NO_MASK_FOR_FIELD(u8), $t, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $t, __NO_MASK_FOR_FIELD(u8), $t, $t, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub from into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, $into, $into, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, __NO_MASK_FOR_FIELD(u8), $into, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, $default_ty, $into, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, __NO_MASK_FOR_FIELD(u8), $default_ty, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) pub $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, $default_ty, $default_ty, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* (pub) $default_ty, __NO_MASK_FOR_FIELD(u8), $default_ty, $default_ty, $getter, $setter:
                                 $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
 
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, mask $mask:ident($mask_t:ty), from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $mask($mask_ty), $into, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
+
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, mask $mask:ident($mask_t:ty), into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $mask($mask_t), $t, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
+
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, mask $mask:ident($mask_t:ty), $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $mask($mask_t), $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) mask $mask:ident($mask_t:ty), from into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $mask($mask_t), $into, $into, $getter, $setter:
+                         $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) mask $mask:ident($mask_t:ty), into $into:ty, $getter:tt, $setter:tt:
+     $($exprs:expr),*; $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $mask($mask_t), $default_ty, $into, $getter, $setter:
+                         $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
+    (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) mask $mask:ident($mask_t:ty), $getter:tt, $setter:tt:  $($exprs:expr),*;
+     $($rest:tt)*) => {
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $mask($mask_t), $default_ty, $default_ty, $getter, $setter:
+                                $($exprs),*}
+        bitfield_fields!{only $only; $default_ty; $($rest)*}
+    };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, from into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $into, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, __NO_MASK_FOR_FIELD(u8), $into, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
 
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $t, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, __NO_MASK_FOR_FIELD(u8), $t, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
 
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $t, $t, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, __NO_MASK_FOR_FIELD(u8), $t, $t, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) from into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $into, $into, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, __NO_MASK_FOR_FIELD(u8), $into, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $default_ty, $into, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, __NO_MASK_FOR_FIELD(u8), $default_ty, $into, $getter, $setter:
                          $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $getter:tt, $setter:tt:  $($exprs:expr),*;
      $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, $default_ty, $default_ty, $getter, $setter:
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $default_ty, __NO_MASK_FOR_FIELD(u8), $default_ty, $default_ty, $getter, $setter:
                                 $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
@@ -240,6 +312,7 @@ macro_rules! bitfield_fields {
     ($($rest:tt)*) => {
         bitfield_fields!{only getter; $($rest)*}
         bitfield_fields!{only setter; $($rest)*}
+        bitfield_fields!{only mask; $($rest)*}
     }
 }
 
@@ -290,6 +363,9 @@ macro_rules! bitfield_debug {
             bitfield_debug!{debug_struct, self, $($rest)*}
             debug_struct.finish()
         }
+    };
+    ($debug_struct:ident, $self:ident, mask $mask:ident($mask_t:ty), $($rest:tt)*) => {
+        bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, #[$attribute:meta] $($rest:tt)*) => {
         bitfield_debug!{$debug_struct, $self, $($rest)*}

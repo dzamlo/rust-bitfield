@@ -40,12 +40,12 @@ bitfield! {
     foo5, set_foo5: 0, 0, 32;
     u32;
     foo6, set_foo6: 5, THREE, THREE;
-    getter_only, _: 3, 1;
-    _, setter_only: 2*2, 2;
+    mask GETTER_MASK(u32), getter_only, _: 3, 1;
+    mask SETTER_MASK(u32), _, setter_only: 2*2, 2;
     getter_only_array, _: 5, 3, 3;
     _, setter_only_array: 2*THREE, 4, 3;
     all_bits, set_all_bits: 31, 0;
-    single_bit, set_single_bit: 3;
+    mask SINGLE_BIT_MASK(u32), single_bit, set_single_bit: 3;
     u8, into Foo, into_foo1, set_into_foo1: 31, 31;
     pub u8, into Foo, into_foo2, set_into_foo2: 31, 31;
     u8, from into Foo, from_foo1, set_from_foo1: 31, 31;
@@ -64,8 +64,8 @@ bitfield! {
     signed_two_bits, set_signed_two_bits: 1, 0;
     signed_eight_bits, set_signed_eight_bits: 7, 0;
     signed_eight_bits_unaligned, set_signed_eight_bits_unaligned: 8, 1;
-    u128, u128_getter, set_u128: 8, 1;
-    i128, i128_getter, set_i128: 8, 1;
+    u128, mask U128_MASK(u128), u128_getter, set_u128: 8, 1;
+    i128, mask I128_MASK(i128), i128_getter, set_i128: 8, 1;
 }
 
 impl FooBar {
@@ -808,7 +808,6 @@ fn field_can_be_public() {
 #[allow(dead_code)]
 mod test_types {
     use bitfield::{BitRange, BitRangeMut};
-    use std;
     use std::sync::atomic::{self, AtomicUsize};
 
     struct Foo;
@@ -910,6 +909,8 @@ mod test_no_default_bitrange {
     use std::fmt::Debug;
     use std::fmt::Error;
     use std::fmt::Formatter;
+
+    use crate::FooBar;
     bitfield! {
       #[derive(Eq, PartialEq)]
       pub struct BitField1(u16);
@@ -1135,5 +1136,14 @@ mod test_no_default_bitrange {
         format!("{:?}", BitField6([0; 1]));
         format!("{:?}", BitField7([0; 1]));
         format!("{:?}", BitField9([0; 1]));
+    }
+
+    #[test]
+    fn masks() {
+        assert_eq!(FooBar::I128_MASK, 0b111111110i128);
+        assert_eq!(FooBar::U128_MASK, 0b111111110u128);
+        assert_eq!(FooBar::SETTER_MASK, 0b11100u32);
+        assert_eq!(FooBar::GETTER_MASK, 0b1110u32);
+        assert_eq!(FooBar::SINGLE_BIT_MASK, 1 << 3);
     }
 }
