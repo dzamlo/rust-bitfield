@@ -42,12 +42,14 @@ bitfield! {
     foo6, set_foo6: 5, THREE, THREE;
     mask GETTER_MASK(u32), getter_only, _: 3, 1;
     mask SETTER_MASK(u32), _, setter_only: 2*2, 2;
+    pub mask PUB_GETTER_MASK(u32), pub_getter_only, _: 3, 1;
+    pub mask PUB_SETTER_MASK(u32), _, pub_setter_only: 2*2, 2;
     getter_only_array, _: 5, 3, 3;
     _, setter_only_array: 2*THREE, 4, 3;
     all_bits, set_all_bits: 31, 0;
     mask SINGLE_BIT_MASK(u32), single_bit, set_single_bit: 3;
     u8, into Foo, into_foo1, set_into_foo1: 31, 31;
-    pub u8, into Foo, into_foo2, set_into_foo2: 31, 31;
+    pub u8, mask PUB_MASK(u32), into Foo, into_foo2, set_into_foo2: 31, 31;
     u8, from into Foo, from_foo1, set_from_foo1: 31, 31;
     u8, from into Foo, _, set_from_foo2: 31, 31;
     u8;
@@ -470,7 +472,7 @@ fn test_is_copy() {
 #[test]
 fn test_debug() {
     let fb = FooBar(1_234_567_890);
-    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
+    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, pub_getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 
@@ -1144,6 +1146,9 @@ mod test_no_default_bitrange {
         assert_eq!(FooBar::U128_MASK, 0b111111110u128);
         assert_eq!(FooBar::SETTER_MASK, 0b11100u32);
         assert_eq!(FooBar::GETTER_MASK, 0b1110u32);
+        assert_eq!(FooBar::PUB_SETTER_MASK, 0b11100u32);
+        assert_eq!(FooBar::PUB_GETTER_MASK, 0b1110u32);
         assert_eq!(FooBar::SINGLE_BIT_MASK, 1 << 3);
+        assert_eq!(FooBar::PUB_MASK, 1 << 31);
     }
 }
