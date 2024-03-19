@@ -74,6 +74,11 @@
 ///     // `field4` will be read as an `u32` and then converted to `FooBar`.
 ///     // The setter will take a `FooBar`, and converted back to an `u32`.
 ///     u32, from into FooBar, field4, set_field4: 10, 0;
+///     // `field5` will be read as an `u32` and then converted to `FooBar`.
+///     // The setter will take a `FooBar`, and converted back to an `u32`.
+///     // The struct will have an associated constant `FIELD5_MASK` of type u64
+///     //with the bits of field5 set
+///     u32, mask FIELD5_MASK(u64), from into FooBar, field5, set_field5: 10, 0;
 /// }
 /// # }
 /// ```
