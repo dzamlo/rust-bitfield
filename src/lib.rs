@@ -271,7 +271,7 @@ macro_rules! bitfield_fields {
 
     (only $only:tt; $default_ty:ty; ($(#[$attribute:meta])*) $t:ty, mask $mask:ident($mask_t:ty), from into $into:ty, $getter:tt, $setter:tt:
      $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $mask($mask_ty), $into, $into, $getter, $setter: $($exprs),*}
+        bitfield_fields!{only $only; @field $(#[$attribute])* () $t, $mask($mask_t), $into, $into, $getter, $setter: $($exprs),*}
         bitfield_fields!{only $only; $default_ty; $($rest)*}
     };
 
