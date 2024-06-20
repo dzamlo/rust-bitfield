@@ -20,7 +20,7 @@ bitfield!{
     get_dscp, _: 13, 8;
     get_ecn, _: 15, 14;
     get_total_length, _: 31, 16;
-    get_identification, _: 47, 31;
+    get_identification, _: 47, 32;
     get_df, _: 49;
     get_mf, _: 50;
     get_fragment_offset, _: 63, 51;
