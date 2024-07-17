@@ -11,6 +11,25 @@
 //!
 //!  Examples and tests are also a great way to understand how to use these macros.
 
+/// Generates and Dispatches trait implementations for a struct
+#[macro_export(local_inner_macros)]
+macro_rules! bitfield_impl {
+    (Debug for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<T: AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+    };
+    (Debug for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $crate::fmt::Debug for $name {
+            bitfield_debug!{struct $name; $($rest)*}
+        }
+    };
+    // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
+    ($macro:ident for struct $name:ident $($rest:tt)*) => {
+        ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
+    }
+}
+
 /// Declares the fields of struct.
 ///
 /// This macro will generate the methods to access the fields of a bitfield. It must be called
@@ -638,18 +657,16 @@ macro_rules! bitfield {
     ($(#[$attribute:meta])* struct $($rest:tt)*) => {
         bitfield!($(#[$attribute])* () struct $($rest)*);
     };
-    // Force `impl Debug` to always be after `no default BitRange` it the two are present.
+    // Force `impl <Trait>` to always be after `no default BitRange` it the two are present.
     // This simplify the rest of the macro.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); impl Debug; no default BitRange; $($rest:tt)*) => {
-         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; impl Debug; $($rest)*}
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); $(impl $trait:ident;)+ no default BitRange; $($rest:tt)*) => {
+         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; $(impl $trait;)* $($rest)*}
      };
 
     // If we have `impl Debug` without `no default BitRange`, we will still match, because when
     // we call `bitfield_bitrange`, we add `no default BitRange`.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl Debug; $($rest:tt)*) => {
-        impl<T: AsRef<[$t]> + $crate::fmt::Debug> $crate::fmt::Debug for $name<T> {
-            bitfield_debug!{struct $name; $($rest)*}
-        }
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident; $($rest:tt)*) => {
+        bitfield_impl!{$trait for struct $name([$t]); $($rest)*}
 
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange;  $($rest)*}
     };
@@ -682,10 +699,8 @@ macro_rules! bitfield {
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange; $($rest)*}
     };
 
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl Debug; $($rest:tt)*) => {
-        impl $crate::fmt::Debug for $name {
-            bitfield_debug!{struct $name; $($rest)*}
-        }
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl $trait:ident; $($rest:tt)*) => {
+        bitfield_impl!{$trait for struct $name($t); $($rest)*}
 
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; $($rest)*}
     };
