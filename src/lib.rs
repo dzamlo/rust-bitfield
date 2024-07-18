@@ -38,11 +38,12 @@ macro_rules! bitfield_impl {
         impl<const N: usize> $crate::ops::BitAnd for $name<[$t; N]> {
             type Output = Self;
             fn bitand(self, rhs: Self) -> Self {
-                let mut output = Self([Default::default(); N]);
-                for i in 0..N {
-                    output.0[i] = self.0[i] & rhs.0[i];
-                }
-                output
+                bitfield_impl!(@consume self rhs &)
+            }
+        }
+        impl<const N: usize> $crate::ops::BitAndAssign for $name<[$t; N]> {
+            fn bitand_assign(&mut self, rhs: Self) {
+                bitfield_impl!(@mutate self rhs &=);
             }
         }
     };
@@ -53,16 +54,22 @@ macro_rules! bitfield_impl {
                 Self(self.0 & rhs.0)
             }
         }
+        impl $crate::ops::BitAndAssign for $name {
+            fn bitand_assign(&mut self, rhs: Self) {
+                self.0 &= rhs.0;
+            }
+        }
     };
     (BitOr for struct $name:ident([$t:ty]); $($rest:tt)*) => {
         impl<const N: usize> $crate::ops::BitOr for $name<[$t; N]> {
             type Output = Self;
             fn bitor(self, rhs: Self) -> Self {
-                let mut output = Self([Default::default(); N]);
-                for i in 0..N {
-                    output.0[i] = self.0[i] | rhs.0[i];
-                }
-                output
+                bitfield_impl!(@consume self rhs |)
+            }
+        }
+        impl<const N: usize> $crate::ops::BitOrAssign for $name<[$t; N]> {
+            fn bitor_assign(&mut self, rhs: Self) {
+                bitfield_impl!(@mutate self rhs |=);
             }
         }
     };
@@ -73,16 +80,22 @@ macro_rules! bitfield_impl {
                 Self(self.0 | rhs.0)
             }
         }
+        impl $crate::ops::BitOrAssign for $name {
+            fn bitor_assign(&mut self, rhs: Self) {
+                self.0 |= rhs.0;
+            }
+        }
     };
     (BitXor for struct $name:ident([$t:ty]); $($rest:tt)*) => {
         impl<const N: usize> $crate::ops::BitXor for $name<[$t; N]> {
             type Output = Self;
             fn bitxor(self, rhs: Self) -> Self {
-                let mut output = Self([Default::default(); N]);
-                for i in 0..N {
-                    output.0[i] = self.0[i] ^ rhs.0[i];
-                }
-                output
+                bitfield_impl!(@consume self rhs ^)
+            }
+        }
+        impl<const N: usize> $crate::ops::BitXorAssign for $name<[$t; N]> {
+            fn bitxor_assign(&mut self, rhs: Self) {
+                bitfield_impl!(@mutate self rhs ^=);
             }
         }
     };
@@ -93,7 +106,24 @@ macro_rules! bitfield_impl {
                 Self(self.0 ^ rhs.0)
             }
         }
+        impl $crate::ops::BitXorAssign for $name {
+            fn bitxor_assign(&mut self, rhs: Self) {
+                self.0 ^= rhs.0;
+            }
+        }
     };
+    (@consume $self:ident $rhs:ident $op:tt) => {{
+        let mut output = Self([Default::default(); N]);
+        for i in 0..N {
+            output.0[i] = $self.0[i] $op $rhs.0[i];
+        }
+        output
+    }};
+    (@mutate $self:ident $rhs:ident $op:tt) => {{
+        for i in 0..N {
+            $self.0[i] $op $rhs.0[i];
+        }
+    }};
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
     ($macro:ident for struct $name:ident $($rest:tt)*) => {
         ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
@@ -672,7 +702,7 @@ macro_rules! bitfield_bitrange {
 ///
 /// The second optional element is a set of lines of the form `impl <Trait>;`. The following traits are supported:
 /// * `Debug`; This will generate an implementation of `fmt::Debug` with the `bitfield_debug` macro.
-/// * `BitAnd`, `BitOr`, `BitXor`; These will generate implementations of the relevant `ops::_` traits.
+/// * `BitAnd`, `BitOr`, `BitXor`; These will generate implementations of the relevant `ops::Bit___` and `ops::Bit___Assign` traits.
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
