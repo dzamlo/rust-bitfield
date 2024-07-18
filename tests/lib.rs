@@ -213,6 +213,12 @@ fn test_bitwise_ops() {
     assert!(ffxor.b());
     assert!(ffxor.c());
     assert!(!ffxor.d());
+
+    ff1 ^= ff2;
+    assert!(!ff1.a());
+    assert!(ff1.b());
+    assert!(ff1.c());
+    assert!(!ff1.d());
 }
 
 #[test]
@@ -797,7 +803,7 @@ fn test_arraybitfield_msb0() {
 
 #[test]
 fn test_arraybitfield_bitops() {
-    let a = ArrayBitfield([1u8; 3]);
+    let mut a = ArrayBitfield([1u8; 3]);
     let b = ArrayBitfield([1u8, 2u8, 4u8]);
 
     let c = a | b;
@@ -808,6 +814,9 @@ fn test_arraybitfield_bitops() {
 
     let e = a ^ b;
     assert_eq!(e.0, [0, 3, 5]);
+
+    a ^= b;
+    assert_eq!(a.0, [0, 3, 5]);
 }
 
 mod some_module {
