@@ -24,10 +24,34 @@ macro_rules! bitfield_impl {
             bitfield_debug!{struct $name; $($rest)*}
         }
     };
+    (BitAnd for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $crate::ops::BitAnd for $name {
+            type Output = Self;
+            fn bitand(self, rhs: Self) -> Self {
+                Self(self.0 & rhs.0)
+            }
+        }
+    };
+    (BitOr for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $crate::ops::BitOr for $name {
+            type Output = Self;
+            fn bitor(self, rhs: Self) -> Self {
+                Self(self.0 | rhs.0)
+            }
+        }
+    };
+    (BitXor for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $crate::ops::BitXor for $name {
+            type Output = Self;
+            fn bitxor(self, rhs: Self) -> Self {
+                Self(self.0 ^ rhs.0)
+            }
+        }
+    };
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
     ($macro:ident for struct $name:ident $($rest:tt)*) => {
         ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
-    }
+    };
 }
 
 /// Declares the fields of struct.
@@ -724,6 +748,8 @@ pub use core::convert::Into;
 pub use core::fmt;
 #[doc(hidden)]
 pub use core::mem::size_of;
+#[doc(hidden)]
+pub use core::ops;
 
 /// A trait to get ranges of bits.
 pub trait BitRange<T> {

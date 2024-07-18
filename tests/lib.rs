@@ -27,6 +27,7 @@ bitfield! {
     /// documentation comments also work!
     struct FooBar(u32);
     impl Debug;
+    impl BitOr;
     foo1, set_foo1: 0, 0;
     u8;
     foo2, set_foo2: 31, 31;
@@ -172,6 +173,46 @@ fn test_multiple_bit() {
     assert_eq!(0xF000_000A, fb.0);
     assert_eq!(0xA, fb.foo3());
     assert_eq!(0xF, fb.foo4());
+}
+
+#[test]
+fn test_bitwise_ops() {
+    bitfield! {
+        #[derive(Clone, Copy)]
+        struct FourFields(u8);
+        impl BitOr;
+        impl BitAnd;
+        impl BitXor;
+        a, set_a: 0;
+        b, set_b: 1;
+        c, set_c: 2;
+        d, set_d: 3;
+    }
+
+    let mut ff1 = FourFields(0);
+    ff1.set_a(true);
+    ff1.set_b(true);
+    let mut ff2 = FourFields(0);
+    ff2.set_a(true);
+    ff2.set_c(true);
+
+    let ffand = ff1 & ff2;
+    assert!(ffand.a());
+    assert!(!ffand.b());
+    assert!(!ffand.c());
+    assert!(!ffand.d());
+
+    let ffor = ff1 | ff2;
+    assert!(ffor.a());
+    assert!(ffor.b());
+    assert!(ffor.c());
+    assert!(!ffor.d());
+
+    let ffxor = ff1 ^ ff2;
+    assert!(!ffxor.a());
+    assert!(ffxor.b());
+    assert!(ffxor.c());
+    assert!(!ffxor.d());
 }
 
 #[test]
