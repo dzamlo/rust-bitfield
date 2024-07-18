@@ -11,7 +11,17 @@
 //!
 //!  Examples and tests are also a great way to understand how to use these macros.
 
-/// Generates and Dispatches trait implementations for a struct
+/// Generates and dispatches trait implementations for a struct
+///
+/// This must be called outside of any `impl` block.
+///
+/// The syntax is `TheNameOfTheTrait for struct TheNameOfTheStruct(TheInnerType);` followed by the syntax of bitfield_fields.
+///
+/// Supported traits:
+/// * Debug
+/// * BitAnd
+/// * BitOr
+/// * BitXor
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_impl {
     (Debug for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -24,6 +34,18 @@ macro_rules! bitfield_impl {
             bitfield_debug!{struct $name; $($rest)*}
         }
     };
+    (BitAnd for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<const N: usize> $crate::ops::BitAnd for $name<[$t; N]> {
+            type Output = Self;
+            fn bitand(self, rhs: Self) -> Self {
+                let mut output = Self([Default::default(); N]);
+                for i in 0..N {
+                    output.0[i] = self.0[i] & rhs.0[i];
+                }
+                output
+            }
+        }
+    };
     (BitAnd for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $crate::ops::BitAnd for $name {
             type Output = Self;
@@ -32,11 +54,35 @@ macro_rules! bitfield_impl {
             }
         }
     };
+    (BitOr for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<const N: usize> $crate::ops::BitOr for $name<[$t; N]> {
+            type Output = Self;
+            fn bitor(self, rhs: Self) -> Self {
+                let mut output = Self([Default::default(); N]);
+                for i in 0..N {
+                    output.0[i] = self.0[i] | rhs.0[i];
+                }
+                output
+            }
+        }
+    };
     (BitOr for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $crate::ops::BitOr for $name {
             type Output = Self;
             fn bitor(self, rhs: Self) -> Self {
                 Self(self.0 | rhs.0)
+            }
+        }
+    };
+    (BitXor for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<const N: usize> $crate::ops::BitXor for $name<[$t; N]> {
+            type Output = Self;
+            fn bitxor(self, rhs: Self) -> Self {
+                let mut output = Self([Default::default(); N]);
+                for i in 0..N {
+                    output.0[i] = self.0[i] ^ rhs.0[i];
+                }
+                output
             }
         }
     };
@@ -624,8 +670,9 @@ macro_rules! bitfield_bitrange {
 /// The first optional element is `no default BitRange;`. With that, no implementation of
 /// `BitRange` will be generated.
 ///
-/// The second optional element is `impl Debug;`. This will generate an implementation of
-/// `fmt::Debug` with the `bitfield_debug` macro.
+/// The second optional element is a set of lines of the form `impl <Trait>;`. The following traits are supported:
+/// * `Debug`; This will generate an implementation of `fmt::Debug` with the `bitfield_debug` macro.
+/// * `BitAnd`, `BitOr`, `BitXor`; These will generate implementations of the relevant `ops::_` traits.
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
@@ -656,6 +703,7 @@ macro_rules! bitfield_bitrange {
 ///   pub struct BitField1(u16);
 ///   no default BitRange;
 ///   impl Debug;
+///   impl BitAnd;
 ///   u8;
 ///   field1, set_field1: 10, 0;
 ///   pub field2, _ : 12, 3;
@@ -687,7 +735,7 @@ macro_rules! bitfield {
          bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; $(impl $trait;)* $($rest)*}
      };
 
-    // If we have `impl Debug` without `no default BitRange`, we will still match, because when
+    // If we have `impl <Trait>` without `no default BitRange`, we will still match, because when
     // we call `bitfield_bitrange`, we add `no default BitRange`.
     ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident; $($rest:tt)*) => {
         bitfield_impl!{$trait for struct $name([$t]); $($rest)*}

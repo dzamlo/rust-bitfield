@@ -518,7 +518,11 @@ fn test_debug() {
 }
 
 bitfield! {
+    #[derive(Clone, Copy)]
     struct ArrayBitfield([u8]);
+    impl BitAnd;
+    impl BitOr;
+    impl BitXor;
     u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
@@ -789,6 +793,21 @@ fn test_arraybitfield_msb0() {
     ab.set_signed_foo3(0);
     ab.set_signed_foo4(-1);
     assert_eq!([0x0F, 0xFF, 0xF0], ab.0);
+}
+
+#[test]
+fn test_arraybitfield_bitops() {
+    let a = ArrayBitfield([1u8; 3]);
+    let b = ArrayBitfield([1u8, 2u8, 4u8]);
+
+    let c = a | b;
+    assert_eq!(c.0, [1, 3, 5]);
+
+    let d = a & b;
+    assert_eq!(d.0, [1, 0, 0]);
+
+    let e = a ^ b;
+    assert_eq!(e.0, [0, 3, 5]);
 }
 
 mod some_module {
