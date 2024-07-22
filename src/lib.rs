@@ -22,6 +22,10 @@
 /// * BitAnd
 /// * BitOr
 /// * BitXor
+///
+/// Additional derivations:
+/// * new
+///   * Creates a constructor, including parameters for all fields with a setter
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_impl {
     (Debug for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -87,6 +91,16 @@ macro_rules! bitfield_impl {
             as_mut[i] $op rhs[i];
         }
     }};
+    (new for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<T: AsMut<[$t]> + Default> $name<T> {
+            bitfield_constructor!{T::default(); () -> {}; $($rest)*}
+        }
+    };
+    (new for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $name {
+            bitfield_constructor!{0; () -> {}; $($rest)*}
+        }
+    };
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
     ($macro:ident for struct $name:ident $($rest:tt)*) => {
         ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
@@ -524,6 +538,38 @@ macro_rules! bitfield_debug {
         bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, ) => {};
+}
+
+/// Implements a constructor function for a bitfield
+#[macro_export(local_inner_macros)]
+macro_rules! bitfield_constructor {
+    ($zero:expr; () -> {}; $($rest:tt)*) => {
+        bitfield_constructor!{@value; () -> {let mut value = Self($zero);}; bool; $($rest)*}
+    };
+    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; $new_ty:ty; $($rest:tt)*) => {
+        bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $new_ty; $($rest)*}
+    };
+    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $default_ty:ty;
+    $(#[$_:meta])* $(pub)? $(into $_into:ty,)?
+    $_getter:ident, $setter:ident: $($_expr:expr),*; $($rest:tt)* ) => {
+        bitfield_constructor!{@$value;
+            ($($param: $ty,)* $setter: $default_ty,) -> {$($stmt;)* $value.$setter($setter);};
+            $default_ty; $($rest)*}
+    };
+    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $default_ty:ty;
+    $(#[$_:meta])* $(pub)? $field_type:ty, $(into $_into:ty,)?
+    $_getter:ident, $setter:ident: $($_expr:expr),*; $($rest:tt)* ) => {
+        bitfield_constructor!{@$value;
+            ($($param: $ty,)* $setter: $field_type,) -> {$($stmt;)* $value.$setter($setter);};
+            $default_ty; $($rest)*}
+    };
+    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $_:ty;) => {
+        #[allow(clippy::too_many_arguments)]
+        fn new($($param: $ty),*) -> Self {
+            $($stmt;)*
+            $value
+        }
+    }
 }
 
 /// Implements `BitRange` and `BitRangeMut` for a tuple struct (or "newtype").
