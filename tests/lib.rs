@@ -817,6 +817,21 @@ fn test_arraybitfield_bitops() {
 
     a ^= b;
     assert_eq!(a.0, [0, 3, 5]);
+
+    let mut vec_a = ArrayBitfield(vec![1u8; 3]);
+    let vec_b = ArrayBitfield(vec![1u8, 2u8, 4u8]);
+
+    let vec_c = vec_a.clone() | vec_b.clone();
+    assert_eq!(vec_c.0, [1, 3, 5]);
+
+    let vec_d = vec_a.clone() & vec_b.clone();
+    assert_eq!(vec_d.0, [1, 0, 0]);
+
+    let vec_e = vec_a.clone() ^ vec_b.clone();
+    assert_eq!(vec_e.0, [0, 3, 5]);
+
+    vec_a ^= vec_b;
+    assert_eq!(vec_a.0, [0, 3, 5]);
 }
 
 mod some_module {

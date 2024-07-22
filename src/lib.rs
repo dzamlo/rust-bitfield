@@ -35,93 +35,56 @@ macro_rules! bitfield_impl {
         }
     };
     (BitAnd for struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        impl<const N: usize> $crate::ops::BitAnd for $name<[$t; N]> {
-            type Output = Self;
-            fn bitand(self, rhs: Self) -> Self {
-                bitfield_impl!(@consume self rhs &)
-            }
-        }
-        impl<const N: usize> $crate::ops::BitAndAssign for $name<[$t; N]> {
-            fn bitand_assign(&mut self, rhs: Self) {
-                bitfield_impl!(@mutate self rhs &=);
-            }
-        }
+        bitfield_impl!{@bitwise BitAnd bitand BitAndAssign bitand_assign $name([$t]) &=}
     };
     (BitAnd for struct $name:ident($t:ty); $($rest:tt)*) => {
-        impl $crate::ops::BitAnd for $name {
-            type Output = Self;
-            fn bitand(self, rhs: Self) -> Self {
-                Self(self.0 & rhs.0)
-            }
-        }
-        impl $crate::ops::BitAndAssign for $name {
-            fn bitand_assign(&mut self, rhs: Self) {
-                self.0 &= rhs.0;
-            }
-        }
+        bitfield_impl!{@bitwise BitAnd bitand BitAndAssign bitand_assign $name($t) &=}
     };
     (BitOr for struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        impl<const N: usize> $crate::ops::BitOr for $name<[$t; N]> {
-            type Output = Self;
-            fn bitor(self, rhs: Self) -> Self {
-                bitfield_impl!(@consume self rhs |)
-            }
-        }
-        impl<const N: usize> $crate::ops::BitOrAssign for $name<[$t; N]> {
-            fn bitor_assign(&mut self, rhs: Self) {
-                bitfield_impl!(@mutate self rhs |=);
-            }
-        }
+        bitfield_impl!{@bitwise BitOr bitor BitOrAssign bitor_assign $name([$t]) |=}
     };
     (BitOr for struct $name:ident($t:ty); $($rest:tt)*) => {
-        impl $crate::ops::BitOr for $name {
-            type Output = Self;
-            fn bitor(self, rhs: Self) -> Self {
-                Self(self.0 | rhs.0)
-            }
-        }
-        impl $crate::ops::BitOrAssign for $name {
-            fn bitor_assign(&mut self, rhs: Self) {
-                self.0 |= rhs.0;
-            }
-        }
+        bitfield_impl!{@bitwise BitOr bitor BitOrAssign bitor_assign $name($t) |=}
     };
     (BitXor for struct $name:ident([$t:ty]); $($rest:tt)*) => {
-        impl<const N: usize> $crate::ops::BitXor for $name<[$t; N]> {
-            type Output = Self;
-            fn bitxor(self, rhs: Self) -> Self {
-                bitfield_impl!(@consume self rhs ^)
-            }
-        }
-        impl<const N: usize> $crate::ops::BitXorAssign for $name<[$t; N]> {
-            fn bitxor_assign(&mut self, rhs: Self) {
-                bitfield_impl!(@mutate self rhs ^=);
-            }
-        }
+        bitfield_impl!{@bitwise BitXor bitxor BitXorAssign bitxor_assign $name([$t]) ^=}
     };
     (BitXor for struct $name:ident($t:ty); $($rest:tt)*) => {
-        impl $crate::ops::BitXor for $name {
+        bitfield_impl!{@bitwise BitXor bitxor BitXorAssign bitxor_assign $name($t) ^=}
+    };
+    (@bitwise $bitwise:ident $func:ident $bitwise_assign:ident $func_assign:ident $name:ident([$t:ty]) $op:tt) => {
+        impl<T: AsMut<[$t]> + AsRef<[$t]>> $crate::ops::$bitwise for $name<T> {
             type Output = Self;
-            fn bitxor(self, rhs: Self) -> Self {
-                Self(self.0 ^ rhs.0)
+            fn $func(mut self, rhs: Self) -> Self {
+                bitfield_impl!(@mutate self rhs $op);
+                self
             }
         }
-        impl $crate::ops::BitXorAssign for $name {
-            fn bitxor_assign(&mut self, rhs: Self) {
-                self.0 ^= rhs.0;
+        impl<T: AsMut<[$t]> + AsRef<[$t]>> $crate::ops::$bitwise_assign for $name<T> {
+            fn $func_assign(&mut self, rhs: Self) {
+                bitfield_impl!(@mutate self rhs $op);
             }
         }
     };
-    (@consume $self:ident $rhs:ident $op:tt) => {{
-        let mut output = Self([Default::default(); N]);
-        for i in 0..N {
-            output.0[i] = $self.0[i] $op $rhs.0[i];
+    (@bitwise $bitwise:ident $func:ident $bitwise_assign:ident $func_assign:ident $name:ident($t:ty) $op:tt) => {
+        impl $crate::ops::$bitwise for $name {
+            type Output = Self;
+            fn $func(mut self, rhs: Self) -> Self {
+                self.0 $op rhs.0;
+                self
+            }
         }
-        output
-    }};
+        impl $crate::ops::$bitwise_assign for $name {
+            fn $func_assign(&mut self, rhs: Self) {
+                self.0 $op rhs.0;
+            }
+        }
+    };
     (@mutate $self:ident $rhs:ident $op:tt) => {{
-        for i in 0..N {
-            $self.0[i] $op $rhs.0[i];
+        let as_mut = AsMut::<[_]>::as_mut(&mut $self.0);
+        let rhs = AsRef::<[_]>::as_ref(&$rhs.0);
+        for i in 0..as_mut.len() {
+            as_mut[i] $op rhs[i];
         }
     }};
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
