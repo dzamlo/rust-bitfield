@@ -175,20 +175,21 @@ fn test_multiple_bit() {
     assert_eq!(0xF, fb.foo4());
 }
 
+bitfield! {
+    #[derive(Clone, Copy)]
+    struct FourFields(u8);
+    impl BitOr;
+    impl BitAnd;
+    impl BitXor;
+    impl new;
+    a, set_a: 0;
+    b, set_b: 1;
+    c, set_c: 2;
+    d, set_d: 3;
+}
+
 #[test]
 fn test_bitwise_ops() {
-    bitfield! {
-        #[derive(Clone, Copy)]
-        struct FourFields(u8);
-        impl BitOr;
-        impl BitAnd;
-        impl BitXor;
-        a, set_a: 0;
-        b, set_b: 1;
-        c, set_c: 2;
-        d, set_d: 3;
-    }
-
     let mut ff1 = FourFields(0);
     ff1.set_a(true);
     ff1.set_b(true);
@@ -217,6 +218,15 @@ fn test_bitwise_ops() {
     ff1 ^= ff2;
     assert!(!ff1.a());
     assert!(ff1.b());
+    assert!(ff1.c());
+    assert!(!ff1.d());
+}
+
+#[test]
+fn test_constructor() {
+    let ff1 = FourFields::new(true, false, true, false);
+    assert!(ff1.a());
+    assert!(!ff1.b());
     assert!(ff1.c());
     assert!(!ff1.d());
 }
@@ -529,6 +539,7 @@ bitfield! {
     impl BitAnd;
     impl BitOr;
     impl BitXor;
+    impl new;
     u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
@@ -817,6 +828,16 @@ fn test_arraybitfield_bitops() {
 
     a ^= b;
     assert_eq!(a.0, [0, 3, 5]);
+}
+
+#[test]
+fn test_arraybitfield_constructor() {
+    let a: ArrayBitfield<[u8; 3]> = ArrayBitfield::new(1, 2, 3, 4, -1, -2, -3, -4, 0b0001_0000);
+    println!("{:b}", a.0[0]);
+    assert_eq!(a.foo1(), 0);
+    assert_eq!(a.foo2(), 10);
+    assert_eq!(a.foo3(), 133);
+    assert_eq!(a.foo4(), 16);
 }
 
 mod some_module {
