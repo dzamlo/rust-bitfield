@@ -7,7 +7,7 @@ name = "CARGO_TARGET_DIR"
 value = "target/{{name}}"
 
 [tests.variables]
-toolchain = ["stable", "beta", "nightly", "1.46.0"]
+toolchain = ["stable", "beta", "nightly", "1.79.0"]
 
 [[tests]]
 name = "cargo-clippy"
