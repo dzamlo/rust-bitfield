@@ -540,6 +540,8 @@ bitfield! {
     impl BitOr;
     impl BitXor;
     impl new;
+    impl new{foo_unsigned (set_foo1: u32, set_foo2: u32, set_foo3: u32, set_foo4: u32)};
+    impl new{foo_signed (set_signed_foo1: i32, set_signed_foo2: i32, set_signed_foo3: i32, set_signed_foo4: i32)};
     u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
@@ -853,6 +855,12 @@ fn test_arraybitfield_constructor() {
     assert_eq!(a.foo2(), 10);
     assert_eq!(a.foo3(), 133);
     assert_eq!(a.foo4(), 16);
+
+    let b: ArrayBitfield<[u8; 3]> = ArrayBitfield::foo_unsigned(1, 4, 6, u32::MAX);
+    assert_eq!(b.signed_foo1(), 0);
+    assert_eq!(b.signed_foo2(), -4);
+    assert_eq!(b.signed_foo3(), -2);
+    assert_eq!(b.signed_foo4(), -1);
 }
 
 mod some_module {

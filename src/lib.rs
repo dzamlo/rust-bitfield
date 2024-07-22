@@ -26,6 +26,9 @@
 /// Additional derivations:
 /// * new
 ///   * Creates a constructor, including parameters for all fields with a setter
+/// * new{constructor_name(setter_name: setter_type, ...)}
+///   * Creates a constructor using the given name and parameters. In order to compile correctly, each `setter_name`
+///     must be the setter of a field of type `setter_type` specified later in the macro.
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_impl {
     (Debug for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -99,6 +102,28 @@ macro_rules! bitfield_impl {
     (new for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $name {
             bitfield_constructor!{0; () -> {}; $($rest)*}
+        }
+    };
+    (new{$new:ident ($($setter_name:ident: $setter_type:ty),*$(,)?)} for struct $name:ident([$t:ty]); $($rest:tt)*) => {
+        impl<T: AsMut<[$t]> + Default> $name<T> {
+            pub fn $new($($setter_name: $setter_type),*) -> Self {
+                let mut value = Self(T::default());
+                $(
+                    value.$setter_name($setter_name);
+                )*
+                value
+            }
+        }
+    };
+    (new{$new:ident ($($setter_name:ident: $setter_type:ty),*$(,)?)} for struct $name:ident($t:ty); $($rest:tt)*) => {
+        impl $name {
+            pub fn $new($($setter_name: $setter_type),*) -> Self {
+                let mut value = Self(0);
+                $(
+                    value.$setter_name($setter_name);
+                )*
+                value
+            }
         }
     };
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
@@ -540,11 +565,29 @@ macro_rules! bitfield_debug {
     ($debug_struct:ident, $self:ident, ) => {};
 }
 
-/// Implements a constructor function for a bitfield
+/// Implements an exhaustive constructor function for a bitfield. Should only be called by `bitfield!` when using `impl new;`
+///
+/// # Examples
+///
+/// ```rs
+/// bitfield_constructor {0; () -> {}; u8; foo1, set_foo1: 2,0; foo2, set_foo2: 7,2}
+/// ```
+/// Generates:
+/// ```rs
+/// pub fn new(set_foo1: u8, set_foo2: u8) -> Self {
+///     let mut value = Self(0);
+///     value.set_foo1(set_foo1);
+///     value.set_foo2(set_foo2);
+///     value
+/// }
+/// ```
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_constructor {
     ($zero:expr; () -> {}; $($rest:tt)*) => {
         bitfield_constructor!{@value; () -> {let mut value = Self($zero);}; bool; $($rest)*}
+    };
+    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; impl $_trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+        bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $old_ty; $($rest)*}
     };
     (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; $new_ty:ty; $($rest:tt)*) => {
         bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $new_ty; $($rest)*}
@@ -565,11 +608,11 @@ macro_rules! bitfield_constructor {
     };
     (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $_:ty;) => {
         #[allow(clippy::too_many_arguments)]
-        fn new($($param: $ty),*) -> Self {
+        pub fn new($($param: $ty),*) -> Self {
             $($stmt;)*
             $value
         }
-    }
+    };
 }
 
 /// Implements `BitRange` and `BitRangeMut` for a tuple struct (or "newtype").
@@ -770,14 +813,14 @@ macro_rules! bitfield {
     };
     // Force `impl <Trait>` to always be after `no default BitRange` it the two are present.
     // This simplify the rest of the macro.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); $(impl $trait:ident;)+ no default BitRange; $($rest:tt)*) => {
-         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; $(impl $trait;)* $($rest)*}
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); $(impl $trait:ident$({$($trait_arg:tt)*})?;)+ no default BitRange; $($rest:tt)*) => {
+         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; $(impl $trait$({$($trait_arg)*})?;)* $($rest)*}
      };
 
     // If we have `impl <Trait>` without `no default BitRange`, we will still match, because when
     // we call `bitfield_bitrange`, we add `no default BitRange`.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident; $($rest:tt)*) => {
-        bitfield_impl!{$trait for struct $name([$t]); $($rest)*}
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+        bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name([$t]); $($rest)*}
 
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange;  $($rest)*}
     };
@@ -810,8 +853,8 @@ macro_rules! bitfield {
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange; $($rest)*}
     };
 
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl $trait:ident; $($rest:tt)*) => {
-        bitfield_impl!{$trait for struct $name($t); $($rest)*}
+    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+        bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name($t); $($rest)*}
 
         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; $($rest)*}
     };
