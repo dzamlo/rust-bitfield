@@ -96,12 +96,12 @@ macro_rules! bitfield_impl {
     }};
     (new for struct $name:ident([$t:ty]); $($rest:tt)*) => {
         impl<T: AsMut<[$t]> + Default> $name<T> {
-            bitfield_constructor!{T::default(); () -> {}; $($rest)*}
+            bitfield_constructor!{() -> {}; $($rest)*}
         }
     };
     (new for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $name {
-            bitfield_constructor!{0; () -> {}; $($rest)*}
+            bitfield_constructor!{() -> {}; $($rest)*}
         }
     };
     (new{$new:ident ($($setter_name:ident: $setter_type:ty),*$(,)?)} for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -583,8 +583,8 @@ macro_rules! bitfield_debug {
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_constructor {
-    ($zero:expr; () -> {}; $($rest:tt)*) => {
-        bitfield_constructor!{@value; () -> {let mut value = Self($zero);}; bool; $($rest)*}
+    (() -> {}; $($rest:tt)*) => {
+        bitfield_constructor!{@value; () -> {let mut value = Self(Default::default());}; bool; $($rest)*}
     };
     (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; impl $_trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
         bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $old_ty; $($rest)*}
@@ -755,6 +755,8 @@ macro_rules! bitfield_bitrange {
 /// The second optional element is a set of lines of the form `impl <Trait>;`. The following traits are supported:
 /// * `Debug`; This will generate an implementation of `fmt::Debug` with the `bitfield_debug` macro.
 /// * `BitAnd`, `BitOr`, `BitXor`; These will generate implementations of the relevant `ops::Bit___` and `ops::Bit___Assign` traits.
+/// * `new`; This will generate a constructor that calls all of the bitfield's setter methods with an argument of the appropriate type
+/// * `new{constructor_name(setter_name: setter_type, ...)}`; This will generate a constructor that calls a given subset of the bitfield's setter methods
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
