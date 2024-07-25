@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] - 2024-07-25
+
+### Added
+- Implement bitwise operations for all array-Like inner types, using `AsRef`/`AsMut`, thanks to @PokeJofeJr4th
+- Allow to derive constructors, thanks to @PokeJofeJr4th
+
 ## [0.16.0] - 2024-07-22
 
 ### Added
@@ -36,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `from into` can be used in place of `from` to change the input type of the setter. Thanks to @roblabla
 
-[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.13.2...v0.14.0
