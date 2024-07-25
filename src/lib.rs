@@ -118,7 +118,7 @@ macro_rules! bitfield_impl {
     (new{$new:ident ($($setter_name:ident: $setter_type:ty),*$(,)?)} for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $name {
             pub fn $new($($setter_name: $setter_type),*) -> Self {
-                let mut value = Self(0);
+                let mut value = Self($t::default());
                 $(
                     value.$setter_name($setter_name);
                 )*
