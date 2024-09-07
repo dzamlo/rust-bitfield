@@ -807,28 +807,22 @@ macro_rules! bitfield_bitrange {
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield {
-    ($(#[$attribute:meta])* pub struct $($rest:tt)*) => {
-        bitfield!($(#[$attribute])* (pub) struct $($rest)*);
-    };
-    ($(#[$attribute:meta])* struct $($rest:tt)*) => {
-        bitfield!($(#[$attribute])* () struct $($rest)*);
-    };
     // Force `impl <Trait>` to always be after `no default BitRange` it the two are present.
     // This simplify the rest of the macro.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($($type:tt)*); $(impl $trait:ident$({$($trait_arg:tt)*})?;)+ no default BitRange; $($rest:tt)*) => {
-         bitfield!{$(#[$attribute])* ($($vis)*) struct $name($($type)*); no default BitRange; $(impl $trait$({$($trait_arg)*})?;)* $($rest)*}
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($($type:tt)*); $(impl $trait:ident$({$($trait_arg:tt)*})?;)+ no default BitRange; $($rest:tt)*) => {
+         bitfield!{$(#[$attribute])* $vis struct $name($($type)*); no default BitRange; $(impl $trait$({$($trait_arg)*})?;)* $($rest)*}
      };
 
     // If we have `impl <Trait>` without `no default BitRange`, we will still match, because when
     // we call `bitfield_bitrange`, we add `no default BitRange`.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
         bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name([$t]); $($rest)*}
 
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange;  $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange;  $($rest)*}
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); no default BitRange; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); no default BitRange; $($rest:tt)*) => {
         $(#[$attribute])*
-        $($vis)* struct $name<T>(pub T);
+        $vis struct $name<T>(pub T);
 
         //impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
         //    bitfield_fields!{$($rest)*}
@@ -840,37 +834,37 @@ macro_rules! bitfield {
            bitfield_fields!{only setter; $($rest)*}
         }
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident([$t:ty]); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name([$t]));
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
     };
 
     // The only difference between the MSB0 version anf the non-MSB0 version, is the BitRange
     // implementation. We delegate everything else to the non-MSB0 version of the macro.
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); no default BitRange; $($rest:tt)*) => {
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange; $($rest)*}
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident(MSB0 [$t:ty]); no default BitRange; $($rest:tt)*) => {
+        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name(MSB0 [$t]));
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name([$t]); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
     };
 
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
         bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name($t); $($rest)*}
 
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($t); no default BitRange; $($rest)*}
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) => {
         $(#[$attribute])*
-        $($vis)* struct $name(pub $t);
+        $vis struct $name(pub $t);
 
         impl $name {
             bitfield_fields!{$t; $($rest)*}
          }
     };
-    ($(#[$attribute:meta])* ($($vis:tt)*) struct $name:ident($t:ty); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name($t));
-        bitfield!{$(#[$attribute])* ($($vis)*) struct $name($t); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($t); no default BitRange; $($rest)*}
     };
 }
 
