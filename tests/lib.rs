@@ -708,7 +708,7 @@ fn test_arraybitfield2() {
 }
 
 bitfield! {
-    struct ArrayBitfieldMsb0(MSB0 [u8]);
+    pub(self) struct ArrayBitfieldMsb0(MSB0 [u8]);
     impl Debug;
     u32;
     foo1, set_foo1: 0, 0;
@@ -865,7 +865,7 @@ fn test_arraybitfield_constructor() {
 
 mod some_module {
     bitfield! {
-        pub struct PubBitFieldInAModule(u32);
+        pub(super) struct PubBitFieldInAModule(u32);
         impl Debug;
         /// Attribute works on pub fields
         pub field1, set_field1: 1;
@@ -1061,7 +1061,7 @@ mod test_no_default_bitrange {
     }
 
     bitfield! {
-      pub struct BitField2(u16);
+      pub(crate) struct BitField2(u16);
       no default BitRange;
       u8;
       field1, set_field1: 10, 0;
