@@ -1245,12 +1245,12 @@ mod test_no_default_bitrange {
 
     #[test]
     fn test_debug_is_implemented_with_no_default_bitrange() {
-        format!("{:?}", BitField1(0));
-        format!("{:?}", BitField3(0));
-        format!("{:?}", BitField4([0; 1]));
-        format!("{:?}", BitField6([0; 1]));
-        format!("{:?}", BitField7([0; 1]));
-        format!("{:?}", BitField9([0; 1]));
+        let _ = format!("{:?}", BitField1(0));
+        let _ = format!("{:?}", BitField3(0));
+        let _ = format!("{:?}", BitField4([0; 1]));
+        let _ = format!("{:?}", BitField6([0; 1]));
+        let _ = format!("{:?}", BitField7([0; 1]));
+        let _ = format!("{:?}", BitField9([0; 1]));
     }
 
     #[test]
