@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2024-09-08
+
+### Breaking Changes
+- Changes published as 0.16.2 (version now yanked) was breaking
+
 ## [0.16.2] - 2024-09-07
 
 ### Added
@@ -47,7 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `from into` can be used in place of `from` to change the input type of the setter. Thanks to @roblabla
 
-[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.2...HEAD
+[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.2...v0.17.0
 [0.16.2]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.0...v0.16.2
 [0.16.1]: https://github.com/dzamlo/rust-bitfield/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.15.0...v0.16.0
