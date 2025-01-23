@@ -511,7 +511,6 @@ macro_rules! bitfield_fields {
 /// fn main() {
 ///     let foobar = FooBar(0x11223344);
 ///     println!("{:?}", foobar);
-
 /// }
 /// ```
 #[macro_export(local_inner_macros)]
