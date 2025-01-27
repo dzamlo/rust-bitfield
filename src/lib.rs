@@ -28,9 +28,6 @@ pub use bitfield_macros::{bitfield_constructor, bitfield_debug, bitfield_fields}
 /// Additional derivations:
 /// * new
 ///   * Creates a constructor, including parameters for all fields with a setter
-/// * new{constructor_name(setter_name: setter_type, ...)}
-///   * Creates a constructor using the given name and parameters. In order to compile correctly, each `setter_name`
-///     must be the setter of a field of type `setter_type` specified later in the macro.
 #[macro_export(local_inner_macros)]
 macro_rules! bitfield_impl {
     (Debug for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -275,7 +272,6 @@ macro_rules! bitfield_bitrange {
 /// * `Debug`; This will generate an implementation of `fmt::Debug` with the `bitfield_debug` macro.
 /// * `BitAnd`, `BitOr`, `BitXor`; These will generate implementations of the relevant `ops::Bit___` and `ops::Bit___Assign` traits.
 /// * `new`; This will generate a constructor that calls all of the bitfield's setter methods with an argument of the appropriate type
-/// * `new{constructor_name(setter_name: setter_type, ...)}`; This will generate a constructor that calls a given subset of the bitfield's setter methods
 ///
 /// The difference with calling those macros separately is that `bitfield_fields` is called
 /// from an appropriate `impl` block. If you use the non-slice form of `bitfield_bitrange`, the
