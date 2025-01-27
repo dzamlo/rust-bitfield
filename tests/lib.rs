@@ -539,6 +539,7 @@ bitfield! {
     impl BitAnd;
     impl BitOr;
     impl BitXor;
+    impl Debug;
     impl new;
     u32;
     foo1, set_foo1: 0, 0;

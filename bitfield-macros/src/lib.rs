@@ -570,3 +570,97 @@ pub fn bitfield_constructor(input: TokenStream) -> TokenStream {
 
     TokenStream::from(expanded)
 }
+
+struct BitfieldDebugArgs {
+    name: Ident,
+    field_lines: BitfieldFieldLines,
+}
+
+impl Parse for BitfieldDebugArgs {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<Token!(struct)>()?;
+        let name = input.parse()?;
+        input.parse::<Token!(;)>()?;
+        let field_lines = input.parse()?;
+
+        Ok(BitfieldDebugArgs { name, field_lines })
+    }
+}
+
+/// Generates a `fmt::Debug` implementation.
+///
+/// This macros must be called from a `impl Debug for ...` block. It will generate the `fmt` method.
+///
+/// In most of the case, you will not directly call this macros, but use `bitfield`.
+///
+/// The syntax is `struct TheNameOfTheStruct;` followed by the syntax of `bitfield_fields`.
+///
+/// The write-only fields are ignored.
+///
+/// # Example
+///
+/// ```ignore
+/// # #[macro_use] extern crate bitfield;
+/// struct FooBar(u32);
+/// bitfield_bitrange!{struct FooBar(u32)}
+/// impl FooBar{
+///     bitfield_fields!{
+///        u32;
+///        field1, _: 7, 0;
+///        field2, _: 31, 24;
+///     }
+/// }
+///
+/// impl std::fmt::Debug for FooBar {
+///     bitfield_debug!{
+///        struct FooBar;
+///        field1, _: 7, 0;
+///        field2, _: 31, 24;
+///     }
+/// }
+///
+/// fn main() {
+///     let foobar = FooBar(0x11223344);
+///     println!("{:?}", foobar);
+/// }
+/// `
+#[proc_macro]
+pub fn bitfield_debug(input: TokenStream) -> TokenStream {
+    let args = parse_macro_input!(input as BitfieldDebugArgs);
+
+    let name = args.name;
+    let fields = args.field_lines.into_fields();
+    let fields_expr = fields
+        .iter()
+        .filter(|field| field.getter != "_")
+        .map(|field| {
+            let getter = &field.getter;
+            match &field.bits_position {
+                BitfieldPosition::Bit(_) | BitfieldPosition::MsbLsb(_, _) => {
+                    quote! {
+                        debug_struct.field(__bitfield_stringify!(#getter), &self.#getter());
+                    }
+                }
+                BitfieldPosition::MsbLsbCount(_, _, count) => {
+                    quote! {
+                        let mut array = [self.#getter(0); #count];
+                        for (i, e) in (&mut array).into_iter().enumerate() {
+                            *e = self.#getter(i);
+                        }
+                        debug_struct.field(__bitfield_stringify!(#getter), &array);
+                    }
+                }
+            }
+        });
+
+    let expanded = quote! {
+        fn fmt(&self, f: &mut ::bitfield::fmt::Formatter) -> ::bitfield::fmt::Result {
+            let mut debug_struct = f.debug_struct(__bitfield_stringify!(#name));
+            debug_struct.field(".0", &self.0);
+            #(#fields_expr)*
+            debug_struct.finish()
+        }
+    };
+
+    TokenStream::from(expanded)
+}

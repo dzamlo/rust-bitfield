@@ -11,7 +11,7 @@
 //!
 //!  Examples and tests are also a great way to understand how to use these macros.
 
-pub use bitfield_macros::{bitfield_constructor, bitfield_fields};
+pub use bitfield_macros::{bitfield_constructor, bitfield_debug, bitfield_fields};
 
 /// Generates and dispatches trait implementations for a struct
 ///
@@ -132,94 +132,6 @@ macro_rules! bitfield_impl {
     ($macro:ident for struct $name:ident $($rest:tt)*) => {
         ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
     };
-}
-
-/// Generates a `fmt::Debug` implementation.
-///
-/// This macros must be called from a `impl Debug for ...` block. It will generate the `fmt` method.
-///
-/// In most of the case, you will not directly call this macros, but use `bitfield`.
-///
-/// The syntax is `struct TheNameOfTheStruct` followed by the syntax of `bitfield_fields`.
-///
-/// The write-only fields are ignored.
-///
-/// # Example
-///
-/// ```rust
-/// # #[macro_use] extern crate bitfield;
-/// struct FooBar(u32);
-/// bitfield_bitrange!{struct FooBar(u32)}
-/// impl FooBar{
-///     bitfield_fields!{
-///        u32;
-///        field1, _: 7, 0;
-///        field2, _: 31, 24;
-///     }
-/// }
-///
-/// impl std::fmt::Debug for FooBar {
-///     bitfield_debug!{
-///        struct FooBar;
-///        field1, _: 7, 0;
-///        field2, _: 31, 24;
-///     }
-/// }
-///
-/// fn main() {
-///     let foobar = FooBar(0x11223344);
-///     println!("{:?}", foobar);
-/// }
-/// ```
-#[macro_export(local_inner_macros)]
-macro_rules! bitfield_debug {
-    (struct $name:ident; $($rest:tt)*) => {
-        fn fmt(&self, f: &mut $crate::fmt::Formatter) -> $crate::fmt::Result {
-            let mut debug_struct = f.debug_struct(__bitfield_stringify!($name));
-            debug_struct.field(".0", &self.0);
-            bitfield_debug!{debug_struct, self, $($rest)*}
-            debug_struct.finish()
-        }
-    };
-    ($debug_struct:ident, $self:ident, mask $mask:ident($mask_t:ty), $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, #[$attribute:meta] $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, pub $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, _, $setter:tt: $($exprs:expr),*; $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, $type:ty; $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $msb:expr, $lsb:expr, $count:expr;
-     $($rest:tt)*) => {
-        let mut array = [$self.$getter(0); $count];
-        for (i, e) in (&mut array).into_iter().enumerate() {
-            *e = $self.$getter(i);
-        }
-        $debug_struct.field(__bitfield_stringify!($getter), &array);
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, $getter:ident, $setter:tt: $($exprs:expr),*; $($rest:tt)*)
-        => {
-        $debug_struct.field(__bitfield_stringify!($getter), &$self.$getter());
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, from into $into:ty, $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, into $into:ty, $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, $type:ty, $($rest:tt)*) => {
-        bitfield_debug!{$debug_struct, $self, $($rest)*}
-    };
-    ($debug_struct:ident, $self:ident, ) => {};
 }
 
 /// Implements `BitRange` and `BitRangeMut` for a tuple struct (or "newtype").
