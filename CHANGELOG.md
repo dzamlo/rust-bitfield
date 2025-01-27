@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- With the new proc macro implementation some corner-cases that were not handled are now handled correctly.
+
+### Breaking Changes
+- The syntax to create a constructor by specifying individual fields has been removed.
+- Some syntax that was supposed to be internal and implementation details are now rejected.
+
 ## [0.17.0] - 2024-09-08
 
 ### Breaking Changes
