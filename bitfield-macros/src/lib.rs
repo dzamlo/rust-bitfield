@@ -261,7 +261,7 @@ impl Parse for BitfieldFieldsWithOnly {
     }
 }
 
-/// Declares the fields of struct.
+/// Declares the fields of a struct.
 ///
 /// This macro will generate the methods to access the fields of a bitfield. It must be called
 /// from an `impl` block for a type that implements the `BitRange` and/or the `Bit` traits
@@ -278,7 +278,9 @@ impl Parse for BitfieldFieldsWithOnly {
 /// * Optional attributes (`#[...]`), documentation comments (`///`) are attributes;
 /// * An optional pub keyword to make the methods public
 /// * An optional type followed by a comma
-/// * Optionally, the word `into` followed by a type, followed by a comma
+/// * Optionnaly, the word `mask` followed by an identifier and an type in parentheses, followed by
+///   a comma
+/// * Optionally, the word `from` and/or `into` followed by a type, followed by a comma
 /// * The getter and setter idents, separated by a comma
 /// * A colon
 /// * One to three expressions of type `usize`
