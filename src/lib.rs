@@ -11,7 +11,7 @@
 //!
 //!  Examples and tests are also a great way to understand how to use these macros.
 
-pub use bitfield_macros::bitfield_fields;
+pub use bitfield_macros::{bitfield_constructor, bitfield_fields};
 
 /// Generates and dispatches trait implementations for a struct
 ///
@@ -98,12 +98,12 @@ macro_rules! bitfield_impl {
     }};
     (new for struct $name:ident([$t:ty]); $($rest:tt)*) => {
         impl<T: AsMut<[$t]> + Default> $name<T> {
-            bitfield_constructor!{() -> {}; $($rest)*}
+            bitfield_constructor!{$($rest)*}
         }
     };
     (new for struct $name:ident($t:ty); $($rest:tt)*) => {
         impl $name {
-            bitfield_constructor!{() -> {}; $($rest)*}
+            bitfield_constructor!{$($rest)*}
         }
     };
     (new{$new:ident ($($setter_name:ident: $setter_type:ty),*$(,)?)} for struct $name:ident([$t:ty]); $($rest:tt)*) => {
@@ -220,56 +220,6 @@ macro_rules! bitfield_debug {
         bitfield_debug!{$debug_struct, $self, $($rest)*}
     };
     ($debug_struct:ident, $self:ident, ) => {};
-}
-
-/// Implements an exhaustive constructor function for a bitfield. Should only be called by `bitfield!` when using `impl new;`
-///
-/// # Examples
-///
-/// ```rs
-/// bitfield_constructor {0; () -> {}; u8; foo1, set_foo1: 2,0; foo2, set_foo2: 7,2}
-/// ```
-/// Generates:
-/// ```rs
-/// pub fn new(set_foo1: u8, set_foo2: u8) -> Self {
-///     let mut value = Self(0);
-///     value.set_foo1(set_foo1);
-///     value.set_foo2(set_foo2);
-///     value
-/// }
-/// ```
-#[macro_export(local_inner_macros)]
-macro_rules! bitfield_constructor {
-    (() -> {}; $($rest:tt)*) => {
-        bitfield_constructor!{@value; () -> {let mut value = Self(Default::default());}; bool; $($rest)*}
-    };
-    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; impl $_trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
-        bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $old_ty; $($rest)*}
-    };
-    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $old_ty:ty; $new_ty:ty; $($rest:tt)*) => {
-        bitfield_constructor!{@$value; ($($param: $ty,)*) -> {$($stmt;)*}; $new_ty; $($rest)*}
-    };
-    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $default_ty:ty;
-    $(#[$_:meta])* $(pub)? $(into $_into:ty,)?
-    $_getter:ident, $setter:ident: $($_expr:expr),*; $($rest:tt)* ) => {
-        bitfield_constructor!{@$value;
-            ($($param: $ty,)* $setter: $default_ty,) -> {$($stmt;)* $value.$setter($setter);};
-            $default_ty; $($rest)*}
-    };
-    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $default_ty:ty;
-    $(#[$_:meta])* $(pub)? $field_type:ty, $(into $_into:ty,)?
-    $_getter:ident, $setter:ident: $($_expr:expr),*; $($rest:tt)* ) => {
-        bitfield_constructor!{@$value;
-            ($($param: $ty,)* $setter: $field_type,) -> {$($stmt;)* $value.$setter($setter);};
-            $default_ty; $($rest)*}
-    };
-    (@$value:ident; ($($param:ident: $ty:ty,)*) -> {$($stmt:stmt;)*}; $_:ty;) => {
-        #[allow(clippy::too_many_arguments)]
-        pub fn new($($param: $ty),*) -> Self {
-            $($stmt;)*
-            $value
-        }
-    };
 }
 
 /// Implements `BitRange` and `BitRangeMut` for a tuple struct (or "newtype").

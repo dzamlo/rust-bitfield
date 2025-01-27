@@ -8,7 +8,7 @@ extern crate bitfield;
 // can also be constants or expressions.
 const THREE: usize = 3;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub struct Foo(u16);
 impl From<u8> for Foo {
     fn from(value: u8) -> Foo {
@@ -540,8 +540,6 @@ bitfield! {
     impl BitOr;
     impl BitXor;
     impl new;
-    impl new{foo_unsigned (set_foo1: u32, set_foo2: u32, set_foo3: u32, set_foo4: u32)};
-    impl new{foo_signed (set_signed_foo1: i32, set_signed_foo2: i32, set_signed_foo3: i32, set_signed_foo4: i32)};
     u32;
     foo1, set_foo1: 0, 0;
     foo2, set_foo2: 7, 0;
@@ -553,6 +551,10 @@ bitfield! {
     signed_foo3, set_signed_foo3: 8, 1;
     signed_foo4, set_signed_foo4: 19, 4;
     u128, u128_getter, set_u128: 19, 4;
+    u8, from into Foo, into_from_foo1, set_into_from_foo1: 21, 20;
+    u8, into Foo, into_foo2, set_into_foo2: 23, 22;
+    u8, from Foo, from_foo3, set_from_foo3: 25, 24;
+
 }
 
 #[test]
@@ -849,18 +851,16 @@ fn test_arraybitfield_bitops() {
 
 #[test]
 fn test_arraybitfield_constructor() {
-    let a: ArrayBitfield<[u8; 3]> = ArrayBitfield::new(1, 2, 3, 4, -1, -2, -3, -4, 0b0001_0000);
+    let a: ArrayBitfield<[u8; 4]> =
+        ArrayBitfield::new(1, 2, 3, 4, -1, -2, -3, -4, 0b0001_0000, Foo(1), 2u8, Foo(3));
     println!("{:b}", a.0[0]);
     assert_eq!(a.foo1(), 0);
     assert_eq!(a.foo2(), 10);
     assert_eq!(a.foo3(), 133);
     assert_eq!(a.foo4(), 16);
-
-    let b: ArrayBitfield<[u8; 3]> = ArrayBitfield::foo_unsigned(1, 4, 6, u32::MAX);
-    assert_eq!(b.signed_foo1(), 0);
-    assert_eq!(b.signed_foo2(), -4);
-    assert_eq!(b.signed_foo3(), -2);
-    assert_eq!(b.signed_foo4(), -1);
+    assert_eq!(a.into_from_foo1(), Foo(1));
+    assert_eq!(a.into_foo2(), Foo(2));
+    assert_eq!(a.from_foo3(), 3);
 }
 
 mod some_module {

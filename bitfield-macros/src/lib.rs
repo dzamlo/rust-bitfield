@@ -525,3 +525,48 @@ fn generate_masks(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
     });
     quote! { #(#masks)* }
 }
+
+/// Implements an exhaustive constructor function for a bitfield. Should only be called by `bitfield!` when using `impl new;`
+#[proc_macro]
+pub fn bitfield_constructor(input: TokenStream) -> TokenStream {
+    let fields_with_only = parse_macro_input!(input as BitfieldFieldsWithOnly);
+
+    let fields = fields_with_only.fields.into_fields();
+
+    let fields_with_setter: Vec<_> = fields
+        .into_iter()
+        .filter(|field| field.setter != "_")
+        .collect();
+    let args = fields_with_setter.iter().map(|field| {
+        let name = &field.setter;
+        match &field.bits_position {
+            BitfieldPosition::Bit(_) => {
+                quote! {
+                   #name: bool
+                }
+            }
+            BitfieldPosition::MsbLsb(_, _) => {
+                let ty_from = field.ty_from().expect(MISSING_TYPE_ERROR_MESSAGE);
+                quote! {
+                    #name: #ty_from
+                }
+            }
+            BitfieldPosition::MsbLsbCount(_, _, _) => {
+                panic!("Array fields as not supported in the `new` method generator")
+            }
+        }
+    });
+
+    let setter_idents = fields_with_setter.iter().map(|field| &field.setter);
+
+    let expanded = quote! {
+        #[allow(clippy::too_many_arguments)]
+        pub fn new(#(#args,)*) -> Self {
+            let mut value = Self(Default::default());
+            #(value.#setter_idents(#setter_idents);)*
+            value
+        }
+    };
+
+    TokenStream::from(expanded)
+}
