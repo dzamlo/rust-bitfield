@@ -600,7 +600,6 @@ impl Parse for BitfieldDebugArgs {
 /// # Example
 ///
 /// ```ignore
-/// # #[macro_use] extern crate bitfield;
 /// struct FooBar(u32);
 /// bitfield_bitrange!{struct FooBar(u32)}
 /// impl FooBar{
@@ -623,7 +622,7 @@ impl Parse for BitfieldDebugArgs {
 ///     let foobar = FooBar(0x11223344);
 ///     println!("{:?}", foobar);
 /// }
-/// `
+/// ```
 #[proc_macro]
 pub fn bitfield_debug(input: TokenStream) -> TokenStream {
     let args = parse_macro_input!(input as BitfieldDebugArgs);
