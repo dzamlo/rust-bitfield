@@ -93,6 +93,13 @@ impl FooBar {
 
     // Check if an empty bitfield_fields compiles without errors.
     bitfield_fields! {}
+
+    // Check if mask, from and into are allowed as getter names
+    bitfield_fields! {
+        u8, mask, _: 2,0;
+        u8, from, _: 2,0;
+        u8, into, _: 2,0;
+    }
 }
 
 #[test]

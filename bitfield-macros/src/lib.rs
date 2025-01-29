@@ -109,18 +109,20 @@ impl Parse for BitfieldField {
         };
 
         let mut mask = None;
-        if input.peek(kw::mask) {
+        // We check for a comma after the keyword to differentiate the case where the keyword is in
+        // fact the getter name and the normal use of the keyword.
+        if input.peek(kw::mask) && !input.peek2(Token!(,)) {
             input.parse::<kw::mask>()?;
             mask = Some(input.parse()?);
             input.parse::<Token!(,)>()?;
         }
 
-        let from = input.peek(kw::from);
+        let from = input.peek(kw::from) && !input.peek2(Token!(,));
         if from {
             input.parse::<kw::from>()?;
         }
 
-        let into = input.peek(kw::into);
+        let into = input.peek(kw::into) && !input.peek2(Token!(,));
         if into {
             input.parse::<kw::into>()?;
         }
