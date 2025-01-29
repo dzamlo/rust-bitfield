@@ -404,7 +404,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         #(#attrs)*
                         #vis fn #getter(&self, index: usize) -> #ty_into {
                             use ::bitfield::BitRange;
-                            __bitfield_debug_assert!(index < #count);
+                            debug_assert!(index < #count);
                             #[allow(clippy::eq_op)]
                             #[allow(clippy::identity_op)]
                             let width = #msb - #lsb + 1;
@@ -457,7 +457,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         #(#attrs)*
                         #vis fn #setter(&mut self, index: usize, value: #ty_from) {
                             use ::bitfield::BitRangeMut;
-                            __bitfield_debug_assert!(index < #count);
+                            debug_assert!(index < #count);
                             #[allow(clippy::eq_op)]
                             #[allow(clippy::identity_op)]
                             let width = #msb - #lsb + 1;
@@ -637,7 +637,7 @@ pub fn bitfield_debug(input: TokenStream) -> TokenStream {
             match &field.bits_position {
                 BitfieldPosition::Bit(_) | BitfieldPosition::MsbLsb(_, _) => {
                     quote! {
-                        debug_struct.field(__bitfield_stringify!(#getter), &self.#getter());
+                        debug_struct.field(stringify!(#getter), &self.#getter());
                     }
                 }
                 BitfieldPosition::MsbLsbCount(_, _, count) => {
@@ -646,7 +646,7 @@ pub fn bitfield_debug(input: TokenStream) -> TokenStream {
                         for (i, e) in (&mut array).into_iter().enumerate() {
                             *e = self.#getter(i);
                         }
-                        debug_struct.field(__bitfield_stringify!(#getter), &array);
+                        debug_struct.field(stringify!(#getter), &array);
                     }
                 }
             }
@@ -654,7 +654,7 @@ pub fn bitfield_debug(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         fn fmt(&self, f: &mut ::bitfield::fmt::Formatter) -> ::bitfield::fmt::Result {
-            let mut debug_struct = f.debug_struct(__bitfield_stringify!(#name));
+            let mut debug_struct = f.debug_struct(stringify!(#name));
             debug_struct.field(".0", &self.0);
             #(#fields_expr)*
             debug_struct.finish()

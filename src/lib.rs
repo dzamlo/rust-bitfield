@@ -479,23 +479,3 @@ macro_rules! impl_bitrange_for_u_combinations {
 
 impl_bitrange_for_u_combinations! {(u8, u16, u32, u64, u128), (u8, u16, u32, u64, u128)}
 impl_bitrange_for_u_combinations! {(u8, u16, u32, u64, u128), (i8, i16, i32, i64, i128)}
-
-// Same as std::stringify but callable from local_inner_macros macros defined inside
-// this crate.
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __bitfield_stringify {
-    ($s:ident) => {
-        stringify!($s)
-    };
-}
-
-// Same as std::debug_assert but callable from local_inner_macros macros defined inside
-// this crate.
-#[macro_export]
-#[doc(hidden)]
-macro_rules! __bitfield_debug_assert {
-    ($e:expr) => {
-        debug_assert!($e)
-    };
-}
