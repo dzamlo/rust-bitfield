@@ -1,8 +1,7 @@
 #![recursion_limit = "128"]
 #![allow(clippy::cognitive_complexity)]
 
-#[macro_use]
-extern crate bitfield;
+use bitfield::{bitfield, bitfield_fields};
 
 // We use a constant to make sure bits positions don't need to be literals but
 // can also be constants or expressions.
@@ -872,6 +871,7 @@ fn test_arraybitfield_constructor() {
 }
 
 mod some_module {
+    use bitfield::bitfield;
     bitfield! {
         pub(super) struct PubBitFieldInAModule(u32);
         impl Debug;
@@ -930,7 +930,7 @@ fn field_can_be_public() {
 // in most of the possible ways.
 #[allow(dead_code)]
 mod test_types {
-    use bitfield::{BitRange, BitRangeMut};
+    use bitfield::{bitfield_fields, BitRange, BitRangeMut};
     use std::sync::atomic::{self, AtomicUsize};
 
     struct Foo;
@@ -1028,7 +1028,7 @@ mod test_types {
 
 #[allow(dead_code)]
 mod test_no_default_bitrange {
-    use bitfield::{BitRange, BitRangeMut};
+    use bitfield::{bitfield, BitRange, BitRangeMut};
     use std::fmt::Debug;
     use std::fmt::Error;
     use std::fmt::Formatter;

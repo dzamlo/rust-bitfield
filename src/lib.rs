@@ -150,7 +150,7 @@ macro_rules! bitfield_impl {
 /// # Examples
 ///
 /// ```rust
-/// # #[macro_use] extern crate bitfield;
+/// # use bitfield::bitfield_bitrange;
 /// # fn main() {}
 /// struct BitField1(u32);
 /// bitfield_bitrange!{struct BitField1(u32)}
@@ -282,7 +282,7 @@ macro_rules! bitfield_bitrange {
 /// # Example
 ///
 /// ```rust
-/// # #[macro_use] extern crate bitfield;
+/// # use bitfield::bitfield;
 /// # fn main() {}
 /// bitfield!{
 ///   pub struct BitField1(u16);
@@ -295,8 +295,7 @@ macro_rules! bitfield_bitrange {
 ///
 /// or with a custom `BitRange` and `BitRangeMut` implementation :
 /// ```rust
-/// # #[macro_use] extern crate bitfield;
-/// # use bitfield::{BitRange, BitRangeMut};
+/// # use bitfield::{bitfield, BitRange, BitRangeMut};
 /// # fn main() {}
 /// bitfield!{
 ///   pub struct BitField1(u16);

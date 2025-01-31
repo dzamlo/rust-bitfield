@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate bitfield;
-
+use bitfield::bitfield;
 use bitfield::BitMut;
 use bitfield::BitRangeMut;
 
