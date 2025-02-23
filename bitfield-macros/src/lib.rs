@@ -10,6 +10,7 @@ use syn::{
 mod kw {
     use syn::custom_keyword;
 
+    custom_keyword!(bool);
     custom_keyword!(from);
     custom_keyword!(getter);
     custom_keyword!(into);
@@ -63,10 +64,39 @@ impl Parse for BitfieldPosition {
     }
 }
 
+enum FieldTy {
+    Bool,
+    Type(Type),
+    None,
+}
+
+impl FieldTy {
+    fn as_type(&self) -> Option<Type> {
+        match self {
+            FieldTy::Bool => Some(syn::parse_str("bool").unwrap()),
+            FieldTy::Type(ty) => Some(ty.clone()),
+            FieldTy::None => None,
+        }
+    }
+
+    fn is_none(&self) -> bool {
+        matches!(self, FieldTy::None)
+    }
+}
+
+impl From<Option<Type>> for FieldTy {
+    fn from(value: Option<Type>) -> Self {
+        match value {
+            Some(ty) => FieldTy::Type(ty),
+            None => FieldTy::None,
+        }
+    }
+}
+
 struct BitfieldField {
     attrs: Vec<Attribute>,
     vis: Visibility,
-    ty: Option<Type>,
+    ty: FieldTy,
     mask: Option<BitfieldMask>,
     from: bool,
     into: bool,
@@ -77,19 +107,19 @@ struct BitfieldField {
 }
 
 impl BitfieldField {
-    fn ty_from(&self) -> Option<&Type> {
+    fn ty_from(&self) -> Option<Type> {
         if self.from {
-            self.from_into_ty.as_ref()
+            self.from_into_ty.clone()
         } else {
-            self.ty.as_ref()
+            self.ty.as_type()
         }
     }
 
-    fn ty_into(&self) -> Option<&Type> {
+    fn ty_into(&self) -> Option<Type> {
         if self.into {
-            self.from_into_ty.as_ref()
+            self.from_into_ty.clone()
         } else {
-            self.ty.as_ref()
+            self.ty.as_type()
         }
     }
 }
@@ -98,13 +128,19 @@ impl Parse for BitfieldField {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let attrs = input.call(Attribute::parse_outer)?;
         let vis = input.parse()?;
-        let mut ty = None;
-        let input_fork = input.fork();
-        if let Ok(parsed_ty) = input_fork.parse() {
-            if input_fork.peek(Token!(,)) && !input_fork.peek3(Token!(:)) {
-                ty = Some(parsed_ty);
-                input.advance_to(&input_fork);
-                input.parse::<Token!(,)>()?;
+        let mut ty = FieldTy::None;
+        if input.peek(kw::bool) && input.peek2(Token!(,)) {
+            input.parse::<kw::bool>()?;
+            ty = FieldTy::Bool;
+            input.parse::<Token!(,)>()?;
+        } else {
+            let input_fork = input.fork();
+            if let Ok(parsed_ty) = input_fork.parse() {
+                if input_fork.peek(Token!(,)) && !input_fork.peek3(Token!(:)) {
+                    ty = FieldTy::Type(parsed_ty);
+                    input.advance_to(&input_fork);
+                    input.parse::<Token!(,)>()?;
+                }
             }
         };
 
@@ -186,7 +222,7 @@ impl BitfieldFieldLines {
                 BitfieldFieldLine::NewDefaultType(ty) => default_ty = Some(ty),
                 BitfieldFieldLine::Field(mut field) => {
                     if field.ty.is_none() {
-                        field.ty = default_ty.clone();
+                        field.ty = default_ty.clone().into();
                     }
                     result.push(field)
                 }
@@ -388,7 +424,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                     }
                 }
                 BitfieldPosition::MsbLsb(msb, lsb) => {
-                    let ty = field.ty.as_ref().expect(MISSING_TYPE_ERROR_MESSAGE);
+                    let ty = field.ty.as_type().expect(MISSING_TYPE_ERROR_MESSAGE);
                     let ty_into = field.ty_into().unwrap();
                     quote! {
                         #(#attrs)*
@@ -399,24 +435,38 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         }
                     }
                 }
-                BitfieldPosition::MsbLsbCount(msb, lsb, count) => {
-                    let ty = field.ty.as_ref().expect(MISSING_TYPE_ERROR_MESSAGE);
-                    let ty_into = field.ty_into().unwrap();
-                    quote! {
-                        #(#attrs)*
-                        #vis fn #getter(&self, index: usize) -> #ty_into {
-                            use ::bitfield::BitRange;
-                            debug_assert!(index < #count);
-                            #[allow(clippy::eq_op)]
-                            #[allow(clippy::identity_op)]
-                            let width = #msb - #lsb + 1;
-                            let lsb = #lsb + index*width;
-                            let msb = lsb + width - 1;
-                            let raw_value: #ty = self.bit_range(msb, lsb);
-                            ::bitfield::Into::into(raw_value)
+                BitfieldPosition::MsbLsbCount(msb, lsb, count) => match &field.ty {
+                    FieldTy::Bool => {
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #getter(&self, index: usize) -> bool {
+                                use ::bitfield::Bit;
+                                assert_eq!(#msb, #lsb);
+                                use ::bitfield::BitRange;
+                                debug_assert!(index < #count);
+                                self.bit((#lsb)+index)
+                            }
                         }
                     }
-                }
+                    FieldTy::Type(ty) => {
+                        let ty_into = field.ty_into().unwrap();
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #getter(&self, index: usize) -> #ty_into {
+                                use ::bitfield::BitRange;
+                                debug_assert!(index < #count);
+                                #[allow(clippy::eq_op)]
+                                #[allow(clippy::identity_op)]
+                                let width = #msb - #lsb + 1;
+                                let lsb = #lsb + index*width;
+                                let msb = lsb + width - 1;
+                                let raw_value: #ty = self.bit_range(msb, lsb);
+                                ::bitfield::Into::into(raw_value)
+                            }
+                        }
+                    }
+                    FieldTy::None => panic!("{}", MISSING_TYPE_ERROR_MESSAGE),
+                },
             })
         } else {
             None
@@ -442,7 +492,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                     }
                 }
                 BitfieldPosition::MsbLsb(msb, lsb) => {
-                    let ty = field.ty.as_ref().expect(MISSING_TYPE_ERROR_MESSAGE);
+                    let ty = field.ty.as_type().expect(MISSING_TYPE_ERROR_MESSAGE);
                     let ty_from = field.ty_from().unwrap();
                     quote! {
                         #(#attrs)*
@@ -452,23 +502,36 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                          }
                     }
                 }
-                BitfieldPosition::MsbLsbCount(msb, lsb, count) => {
-                    let ty = field.ty.as_ref().expect(MISSING_TYPE_ERROR_MESSAGE);
-                    let ty_from = field.ty_from().unwrap();
-                    quote! {
-                        #(#attrs)*
-                        #vis fn #setter(&mut self, index: usize, value: #ty_from) {
-                            use ::bitfield::BitRangeMut;
-                            debug_assert!(index < #count);
-                            #[allow(clippy::eq_op)]
-                            #[allow(clippy::identity_op)]
-                            let width = #msb - #lsb + 1;
-                            let lsb = #lsb + index*width;
-                            let msb = lsb + width - 1;
-                            self.set_bit_range(msb, lsb, ::bitfield::Into::<#ty>::into(value));
-                         }
+                BitfieldPosition::MsbLsbCount(msb, lsb, count) => match &field.ty {
+                    FieldTy::Bool => {
+                        let ty_from = field.ty_from().unwrap();
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #setter(&mut self, index: usize, value: #ty_from) {
+                                use ::bitfield::BitMut;
+                                debug_assert!(index < #count);;
+                                self.set_bit(#lsb+index, ::bitfield::Into::<bool>::into(value));
+                             }
+                        }
                     }
-                }
+                    FieldTy::Type(ty) => {
+                        let ty_from = field.ty_from().unwrap();
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #setter(&mut self, index: usize, value: #ty_from) {
+                                use ::bitfield::BitRangeMut;
+                                debug_assert!(index < #count);
+                                #[allow(clippy::eq_op)]
+                                #[allow(clippy::identity_op)]
+                                let width = #msb - #lsb + 1;
+                                let lsb = #lsb + index*width;
+                                let msb = lsb + width - 1;
+                                self.set_bit_range(msb, lsb, ::bitfield::Into::<#ty>::into(value));
+                             }
+                        }
+                    }
+                    FieldTy::None => panic!("{}", MISSING_TYPE_ERROR_MESSAGE),
+                },
             })
         } else {
             None

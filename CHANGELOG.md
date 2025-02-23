@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Allow to specify an array of bools.
+
+### Breaking Changes
+- If the type of an array field is exactly `bool`, then the `Bit`/`BitMut` traits are used instead of
+  `BitRange`/`BitRangeMut`. In some very unlikely case where the traits are implemented manually, this may break
+  existing code.
+
 ## [0.18.1] - 2025-01-29
 
 ### Fixed

@@ -68,6 +68,7 @@ bitfield! {
     signed_eight_bits_unaligned, set_signed_eight_bits_unaligned: 8, 1;
     u128, mask U128_MASK(u128), u128_getter, set_u128: 8, 1;
     i128, mask I128_MASK(i128), i128_getter, set_i128: 8, 1;
+    bool, bool_array_getter, bool_array_setter: 8, 8, 3;
 }
 
 impl FooBar {
@@ -179,6 +180,22 @@ fn test_multiple_bit() {
     assert_eq!(0xF000_000A, fb.0);
     assert_eq!(0xA, fb.foo3());
     assert_eq!(0xF, fb.foo4());
+}
+
+#[test]
+fn test_bool_array_field() {
+    let mut fb = FooBar(0);
+
+    assert!(!fb.bool_array_getter(0));
+    assert!(!fb.bool_array_getter(1));
+    assert!(!fb.bool_array_getter(2));
+
+    fb.bool_array_setter(1, true);
+
+    assert_eq!(1 << 9, fb.0);
+    assert!(!fb.bool_array_getter(0));
+    assert!(fb.bool_array_getter(1));
+    assert!(!fb.bool_array_getter(2));
 }
 
 bitfield! {
@@ -535,7 +552,7 @@ fn test_is_copy() {
 #[test]
 fn test_debug() {
     let fb = FooBar(1_234_567_890);
-    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, pub_getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105 }";
+    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, pub_getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105, bool_array_getter: [false, true, false] }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 
@@ -561,7 +578,6 @@ bitfield! {
     u8, from into Foo, into_from_foo1, set_into_from_foo1: 21, 20;
     u8, into Foo, into_foo2, set_into_foo2: 23, 22;
     u8, from Foo, from_foo3, set_from_foo3: 25, 24;
-
 }
 
 #[test]
@@ -676,6 +692,7 @@ fn test_arraybitfield2() {
         foo2, set_foo2: 7, 0;
         foo3, set_foo3: 8, 1;
         foo4, set_foo4: 20, 4;
+        bool, bool_array_getter, bool_array_setter: 0, 0, 3;
     }
     let mut ab = ArrayBitfield2([0; 2]);
 
