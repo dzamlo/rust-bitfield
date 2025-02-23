@@ -1,6 +1,6 @@
 [package]
 name = "bitfield"
-version = "0.18.1"
+version = "0.19.0"
 edition = "2021"
 authors = ["Loïc Damien <loic.damien@dzamlo.ch>"]
 license = "MIT OR Apache-2.0"
@@ -9,7 +9,7 @@ repository = "https://github.com/dzamlo/rust-bitfield"
 documentation = "https://docs.rs/bitfield"
 
 [dependencies]
-bitfield-macros = { version = "0.18.1", path = "bitfield-macros" }
+bitfield-macros = { version = "0.19.0", path = "bitfield-macros" }
 
 [workspace]
 
