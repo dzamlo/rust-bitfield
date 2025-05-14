@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.1] - 2025-05-14
+
 ### Fixed
 - Allow to use `impl new` with `#[deny(missing_docs)]`.
 
@@ -81,7 +83,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `from into` can be used in place of `from` to change the input type of the setter. Thanks to @roblabla
 
-[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.1...HEAD
+[0.19.1]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.0...v0.19.1
 [0.19.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.18.1...v0.19.0
 [0.18.1]: https://github.com/dzamlo/rust-bitfield/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.17.0...v0.18.0
