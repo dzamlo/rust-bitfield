@@ -1290,3 +1290,19 @@ mod test_no_default_bitrange {
         assert_eq!(FooBar::PUB_MASK, 1 << 31);
     }
 }
+
+#[deny(missing_docs)]
+/// A module to test that `impl new` works with `#[deny(missing_docs)]`
+pub mod deny_missing_docs {
+    use bitfield::bitfield;
+
+    bitfield! {
+        /// A doc comment for the struct
+        pub struct BitField10(u8);
+
+        impl new;
+
+        /// A doc comment for the methods
+        pub field1, set_field1: 0;
+    }
+}

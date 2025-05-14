@@ -625,7 +625,7 @@ pub fn bitfield_constructor(input: TokenStream) -> TokenStream {
     let setter_idents = fields_with_setter.iter().map(|field| &field.setter);
 
     let expanded = quote! {
-        #[allow(clippy::too_many_arguments)]
+        #[allow(clippy::too_many_arguments, missing_docs)]
         pub fn new(#(#args,)*) -> Self {
             let mut value = Self(Default::default());
             #(value.#setter_idents(#setter_idents);)*
