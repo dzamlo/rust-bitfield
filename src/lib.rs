@@ -431,6 +431,26 @@ impl<T: BitRangeMut<u8>> BitMut for T {
     }
 }
 
+#[doc(hidden)]
+trait ToUnsigned {
+    type Output;
+}
+
+macro_rules! impl_to_unsigned {
+    ($($t:ty => $u:ty),* $(,)?) => {
+        $(
+            impl ToUnsigned for $t {
+                type Output = $u;
+            }
+        )*
+    };
+}
+
+impl_to_unsigned! {
+    u8 => u8, u16 => u16, u32 => u32, u64 => u64, u128 => u128,
+    i8 => u8, i16 => u16, i32 => u32, i64 => u64, i128 => u128,
+}
+
 macro_rules! impl_bitrange_for_u {
     ($t:ty, $bitrange_ty:ty) => {
         impl BitRange<$bitrange_ty> for $t {
@@ -438,10 +458,10 @@ macro_rules! impl_bitrange_for_u {
             #[allow(clippy::cast_lossless)]
             #[allow(clippy::manual_bits)]
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
-                let bit_len = size_of::<$t>()*8;
-                let result_bit_len = size_of::<$bitrange_ty>()*8;
-                let result = ((*self << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb))
-                    as $bitrange_ty;
+                let bit_len = size_of::<$t>() * 8;
+                let result_bit_len = size_of::<$bitrange_ty>() * 8;
+                let result =
+                    ((*self << (bit_len - msb - 1)) >> (bit_len - msb - 1 + lsb)) as $bitrange_ty;
                 result << (result_bit_len - (msb - lsb + 1)) >> (result_bit_len - (msb - lsb + 1))
             }
         }
@@ -451,16 +471,16 @@ macro_rules! impl_bitrange_for_u {
             #[allow(clippy::cast_lossless)]
             #[allow(clippy::manual_bits)]
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
-                let bit_len = size_of::<$t>()*8;
-                let mask: $t = !(0 as $t)
+                let bit_len = size_of::<$t>() * 8;
+                let mask: <$t as ToUnsigned>::Output = !(0 as <$t as ToUnsigned>::Output)
                     << (bit_len - msb - 1)
                     >> (bit_len - msb - 1 + lsb)
                     << (lsb);
-                *self &= !mask;
-                *self |= (value as $t << lsb) & mask;
+                *self &= !mask as $t;
+                *self |= (((value as <$t as ToUnsigned>::Output) << lsb) & mask) as $t;
             }
         }
-    }
+    };
 }
 
 macro_rules! impl_bitrange_for_u_combinations {
