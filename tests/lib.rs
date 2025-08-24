@@ -1306,3 +1306,43 @@ pub mod deny_missing_docs {
         pub field1, set_field1: 0;
     }
 }
+
+bitfield! {
+    #[derive(Copy, Clone)]
+    /// documentation comments also work!
+    struct FooBarSigned(i32);
+    impl Debug;
+    impl BitOr;
+    foo1, set_foo1: 31, 8;
+    foo2, set_foo2: 10, 10, 2;
+    mask A_MASK(u32), foo3, set_foo3: 3, 1;
+    u8;
+    foo4, set_foo4: THREE, 0;
+    u32, foo5, set_foo5: 31,8;
+}
+
+#[test]
+fn field_type_signed() {
+    let fbs = FooBarSigned(0);
+    let _: i32 = fbs.foo1();
+    let _: i32 = fbs.foo2(0);
+    let _: i32 = fbs.foo3();
+    let _: u8 = fbs.foo4();
+    let _: u32 = fbs.foo5();
+}
+
+#[test]
+fn value_signed() {
+    let initial_value = 0b1101_0101_1010_1010_1010_1010_0110_0010u32 as i32;
+    let fbs = FooBarSigned(initial_value);
+    assert_eq!(
+        fbs.foo1(),
+        0b1111_1111_1101_0101_1010_1010_1010_1010u32 as i32
+    );
+    assert_eq!(fbs.foo5(), 0b1101_0101_1010_1010_1010_1010u32);
+}
+
+#[test]
+fn mask_signed() {
+    assert_eq!(FooBarSigned::A_MASK, 0b1110u32);
+}
