@@ -1,6 +1,6 @@
 [package]
 name = "bitfield-macros"
-version = "0.19.1"
+version = "0.19.2"
 edition = "2021"
 authors = ["Loïc Damien <loic.damien@dzamlo.ch>"]
 license = "MIT OR Apache-2.0"
