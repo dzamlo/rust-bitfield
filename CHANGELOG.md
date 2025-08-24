@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Allow usage of a signed int types for the base of newtype, thanks to @FeeeeK
+
 ## [0.19.1] - 2025-05-14
 
 ### Fixed
