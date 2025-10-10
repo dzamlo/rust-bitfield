@@ -45,6 +45,12 @@ The documentation of the released version is available on [doc.rs](https://docs.
 
 When defining a field, the MSB comes first and the LSB second.
 
+### Sign extension and valid range of signed field
+
+When the type of a field is signed (`i8`, `i16`, ...) sign extension is done when reading the field. THis means that if the MSB of the read bits is 1, the returned values will be negative.
+
+This also means that the valid range of value for the field is different that a unsigend field. A 4 bits field got from -8 (-2<sup>3</sup>) to 7 (2<sup>3</sup>-1) instead of 0 to 15.
+
 ## License
 
 Licensed under either of
