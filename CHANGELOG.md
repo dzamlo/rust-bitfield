@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
  - In debug mode, check that msb >= lsb in the default `BitRange`/`BitRangeMut` implementations and show a more helpful
    message than before if this is the case, thanks to @blaine-dodson for reporting
+ - Mention MSB and LSB ordering in the readme
 
 ## [0.19.2] - 2025-08-24
 

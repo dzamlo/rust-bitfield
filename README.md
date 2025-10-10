@@ -39,6 +39,11 @@ The range at the end (e.g. 3, 0) defines the bit range where the information is 
 
 The documentation of the released version is available on [doc.rs](https://docs.rs/bitfield).
 
+## Things to watch out for
+
+### MSB and LSB ordering
+
+When defining a field, the MSB comes first and the LSB second.
 
 ## License
 
