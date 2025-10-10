@@ -13,6 +13,19 @@
 
 pub use bitfield_macros::{bitfield_constructor, bitfield_debug, bitfield_fields};
 
+/// Internal use macro, that `debug_assert` than msb >= lsb and thus they are not inverted
+#[macro_export]
+macro_rules! check_msb_lsb_order {
+    ($msb:expr, $lsb:expr) => {
+        debug_assert!(
+            $msb >= $lsb,
+            "the MSB ({}) is smaller than the LSB ({}), you likely inverted them",
+            $msb,
+            $lsb
+        );
+    };
+}
+
 /// Generates and dispatches trait implementations for a struct
 ///
 /// This must be called outside of any `impl` block.
@@ -168,6 +181,7 @@ macro_rules! bitfield_bitrange {
         impl<T: AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
             for $name<T> {
                 fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
+                    check_msb_lsb_order!(msb, lsb);
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
                     let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                     let mut value = 0;
@@ -182,6 +196,7 @@ macro_rules! bitfield_bitrange {
             for $name<T> {
 
                 fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
+                    check_msb_lsb_order!(msb, lsb);
                     let bit_len = $crate::size_of::<$slice_ty>()*8;
                     let mut value = value;
                     for i in lsb..=msb {
@@ -196,6 +211,7 @@ macro_rules! bitfield_bitrange {
         impl<T: AsRef<[$slice_ty]>> $crate::BitRange<$bitrange_ty>
             for $name<T> {
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
+                check_msb_lsb_order!(msb, lsb);
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let value_bit_len = $crate::size_of::<$bitrange_ty>()*8;
                 let mut value = 0;
@@ -210,6 +226,7 @@ macro_rules! bitfield_bitrange {
         impl<T: AsMut<[$slice_ty]>> $crate::BitRangeMut<$bitrange_ty>
             for $name<T> {
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
+                check_msb_lsb_order!(msb, lsb);
                 let bit_len = $crate::size_of::<$slice_ty>()*8;
                 let mut value = value;
                 for i in (lsb..=msb).rev() {
@@ -458,6 +475,7 @@ macro_rules! impl_bitrange_for_u {
             #[allow(clippy::cast_lossless)]
             #[allow(clippy::manual_bits)]
             fn bit_range(&self, msb: usize, lsb: usize) -> $bitrange_ty {
+                check_msb_lsb_order!(msb, lsb);
                 let bit_len = size_of::<$t>() * 8;
                 let result_bit_len = size_of::<$bitrange_ty>() * 8;
                 let result =
@@ -471,6 +489,7 @@ macro_rules! impl_bitrange_for_u {
             #[allow(clippy::cast_lossless)]
             #[allow(clippy::manual_bits)]
             fn set_bit_range(&mut self, msb: usize, lsb: usize, value: $bitrange_ty) {
+                check_msb_lsb_order!(msb, lsb);
                 let bit_len = size_of::<$t>() * 8;
                 let mask: <$t as ToUnsigned>::Output = !(0 as <$t as ToUnsigned>::Output)
                     << (bit_len - msb - 1)

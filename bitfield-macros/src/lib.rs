@@ -454,6 +454,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                             #(#attrs)*
                             #vis fn #getter(&self, index: usize) -> #ty_into {
                                 use ::bitfield::BitRange;
+                                ::bitfield::check_msb_lsb_order!(#msb, #lsb);
                                 debug_assert!(index < #count);
                                 #[allow(clippy::eq_op)]
                                 #[allow(clippy::identity_op)]
@@ -520,6 +521,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                             #(#attrs)*
                             #vis fn #setter(&mut self, index: usize, value: #ty_from) {
                                 use ::bitfield::BitRangeMut;
+                                ::bitfield::check_msb_lsb_order!(#msb, #lsb);
                                 debug_assert!(index < #count);
                                 #[allow(clippy::eq_op)]
                                 #[allow(clippy::identity_op)]
