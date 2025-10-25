@@ -21,6 +21,27 @@ impl From<Foo> for u8 {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct EvenU8(u8);
+
+impl From<EvenU8> for u8 {
+    fn from(value: EvenU8) -> u8 {
+        value.0
+    }
+}
+
+impl TryFrom<u8> for EvenU8 {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        if value % 2 == 0 {
+            Ok(EvenU8(value))
+        } else {
+            Err(())
+        }
+    }
+}
+
 bitfield! {
     #[derive(Copy, Clone)]
     /// documentation comments also work!
@@ -61,6 +82,9 @@ bitfield! {
     from into Foo, _, set_from_foo4: 31, 31;
     from into Foo, from_foo5, set_from_foo5: 29, 29, 3;
     from into Foo, from_foo6, _: 31, 31;
+    from try_into EvenU8, from_foo7, set_from_foo7: 31, 30;
+    try_into EvenU8, from_foo8, set_from_foo8: 31, 30;
+
     i8;
     signed_single_bit, set_signed_single_bit: 0, 0;
     signed_two_bits, set_signed_two_bits: 1, 0;
@@ -201,6 +225,19 @@ fn test_bool_array_field() {
     assert!(!fb.bool_array_getter(0));
     assert!(fb.bool_array_getter(1));
     assert!(!fb.bool_array_getter(2));
+}
+
+#[test]
+fn test_try_into() {
+    let mut fb = FooBar(0);
+    assert_eq!(fb.from_foo7(), Ok(EvenU8(0)));
+    assert_eq!(fb.from_foo8(), Ok(EvenU8(0)));
+    fb.set_from_foo7(EvenU8(1));
+    assert_eq!(fb.from_foo7(), Err(()));
+    assert_eq!(fb.from_foo8(), Err(()));
+    fb.set_from_foo8(2);
+    assert_eq!(fb.from_foo7(), Ok(EvenU8(2)));
+    assert_eq!(fb.from_foo8(), Ok(EvenU8(2)));
 }
 
 #[test]
@@ -585,7 +622,7 @@ fn test_is_copy() {
 #[test]
 fn test_debug() {
     let fb = FooBar(1_234_567_890);
-    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, pub_getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105, bool_array_getter: [false, true, false] }";
+    let expected = "FooBar { .0: 1234567890, foo1: 0, foo2: 0, foo3: 2, foo3: 2, foo4: 4, foo5: [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0], foo6: [2, 3, 1], getter_only: 1, pub_getter_only: 1, getter_only_array: [2, 3, 1], all_bits: 1234567890, single_bit: false, into_foo1: Foo(0), into_foo2: Foo(0), from_foo1: Foo(0), into_foo3: Foo(0), into_foo4: Foo(0), into_foo6: [Foo(0), Foo(1), Foo(0)], from_foo3: Foo(0), from_foo5: [Foo(0), Foo(1), Foo(0)], from_foo6: Foo(0), from_foo7: Err(()), from_foo8: Err(()), signed_single_bit: 0, signed_two_bits: -2, signed_eight_bits: -46, signed_eight_bits_unaligned: 105, u128_getter: 105, i128_getter: 105, bool_array_getter: [false, true, false] }";
     assert_eq!(expected, format!("{:?}", fb))
 }
 

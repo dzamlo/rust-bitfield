@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+ - Support `try_into` keyword in field definition to use `TryInto` instead of `Into`
+
 ## [0.19.3] - 2025-10-10
 
 ### Added

@@ -14,6 +14,7 @@ mod kw {
     custom_keyword!(from);
     custom_keyword!(getter);
     custom_keyword!(into);
+    custom_keyword!(try_into);
     custom_keyword!(mask);
     custom_keyword!(only);
     custom_keyword!(setter);
@@ -100,6 +101,7 @@ struct BitfieldField {
     mask: Option<BitfieldMask>,
     from: bool,
     into: bool,
+    try_into: bool,
     from_into_ty: Option<Type>,
     getter: Ident,
     setter: Ident,
@@ -116,7 +118,7 @@ impl BitfieldField {
     }
 
     fn ty_into(&self) -> Option<Type> {
-        if self.into {
+        if self.into || self.try_into {
             self.from_into_ty.clone()
         } else {
             self.ty.as_type()
@@ -159,12 +161,19 @@ impl Parse for BitfieldField {
         }
 
         let into = input.peek(kw::into) && !input.peek2(Token!(,));
+
+        let mut try_into = false;
         if into {
             input.parse::<kw::into>()?;
+        } else {
+            try_into = input.peek(kw::try_into) && !input.peek2(Token!(,));
+            if try_into {
+                input.parse::<kw::try_into>()?;
+            }
         }
 
         let mut from_into_ty = None;
-        if from || into {
+        if from || into || try_into {
             from_into_ty = Some(input.parse()?);
             input.parse::<Token!(,)>()?;
         };
@@ -182,6 +191,7 @@ impl Parse for BitfieldField {
             mask,
             from,
             into,
+            try_into,
             from_into_ty,
             getter,
             setter,
@@ -318,7 +328,7 @@ impl Parse for BitfieldFieldsWithOnly {
 /// * An optional type followed by a comma
 /// * Optionnaly, the word `mask` followed by an identifier and an type in parentheses, followed by
 ///   a comma
-/// * Optionally, the word `from` and/or `into` followed by a type, followed by a comma
+/// * Optionally, the word `from` and/or (`into` or `try_into`) followed by a type, followed by a comma
 /// * The getter and setter idents, separated by a comma
 /// * A colon
 /// * One to three expressions of type `usize`
@@ -326,6 +336,7 @@ impl Parse for BitfieldFieldsWithOnly {
 /// The attributes and pub will be applied to the two methods generated.
 ///
 /// If the `into` part is used, the getter will convert the field after reading it.
+/// If the `try_into` part is used, the getter will try to convert the field after reading it.
 ///
 /// The getter and setter idents can be `_` to not generate one of the two. For example, if the
 /// setter is `_`, the field will be read-only.
@@ -426,12 +437,23 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                 BitfieldPosition::MsbLsb(msb, lsb) => {
                     let ty = field.ty.as_type().expect(MISSING_TYPE_ERROR_MESSAGE);
                     let ty_into = field.ty_into().unwrap();
-                    quote! {
-                        #(#attrs)*
-                        #vis fn #getter(&self) -> #ty_into {
-                            use ::bitfield::BitRange;
-                            let raw_value: #ty = self.bit_range(#msb, #lsb);
-                            ::bitfield::Into::into(raw_value)
+                    if field.try_into {
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #getter(&self) -> Result<#ty_into, <#ty_into as TryFrom<#ty>>::Error> {
+                                use ::bitfield::BitRange;
+                                let raw_value: #ty = self.bit_range(#msb, #lsb);
+                                ::bitfield::TryInto::try_into(raw_value)
+                            }
+                        }
+                    } else {
+                        quote! {
+                            #(#attrs)*
+                            #vis fn #getter(&self) -> #ty_into {
+                                use ::bitfield::BitRange;
+                                let raw_value: #ty = self.bit_range(#msb, #lsb);
+                                ::bitfield::Into::into(raw_value)
+                            }
                         }
                     }
                 }
