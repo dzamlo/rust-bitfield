@@ -13,10 +13,14 @@ An IPv4 header could be described like that:
 
 ```rust
 bitfield!{
+    /// A IPV4 header
     struct IpV4Header(MSB0 [u8]);
     u32;
+    /// The version field
     get_version, _: 3, 0;
+    /// The Internet Header Length (IHL) field
     get_ihl, _: 7, 4;
+    /// ...
     get_dscp, _: 13, 8;
     get_ecn, _: 15, 14;
     get_total_length, _: 31, 16;
