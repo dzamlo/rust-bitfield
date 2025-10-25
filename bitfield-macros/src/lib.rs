@@ -472,9 +472,17 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                     }
                     FieldTy::Type(ty) => {
                         let ty_into = field.ty_into().unwrap();
+                        let (return_ty, last_line) = if field.try_into {
+                            (
+                                quote!{Result<#ty_into, <#ty_into as TryFrom<#ty>>::Error>}, 
+                                quote!{::bitfield::TryInto::try_into(raw_value)}
+                            )
+                        } else {
+                            (quote!{#ty_into}, quote!{::bitfield::Into::into(raw_value)})
+                        };
                         quote! {
                             #(#attrs)*
-                            #vis fn #getter(&self, index: usize) -> #ty_into {
+                            #vis fn #getter(&self, index: usize) -> #return_ty {
                                 use ::bitfield::BitRange;
                                 ::bitfield::check_msb_lsb_order!(#msb, #lsb);
                                 debug_assert!(index < #count);
@@ -484,7 +492,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                                 let lsb = #lsb + index*width;
                                 let msb = lsb + width - 1;
                                 let raw_value: #ty = self.bit_range(msb, lsb);
-                                ::bitfield::Into::into(raw_value)
+                                #last_line
                             }
                         }
                     }
