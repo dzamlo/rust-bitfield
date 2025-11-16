@@ -140,7 +140,7 @@ macro_rules! bitfield_impl {
     };
     // display a more friendly error message when someone tries to use `impl <Trait>;` syntax when not supported
     ($macro:ident for struct $name:ident $($rest:tt)*) => {
-        ::std::compile_error!(::std::stringify!(Unsupported impl $macro for struct $name));
+        ::core::compile_error!(::core::stringify!(Unsupported impl $macro for struct $name));
     };
 }
 

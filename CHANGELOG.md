@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
  - Support `try_into` keyword in field definition to use `TryInto` instead of `Into`
 
+### Fixed
+  - Print the correct error message on incorrect use of the `impl` in `no_std` crates, thanks to @stop5 for reporting and proposing the fix
+
 ## [0.19.3] - 2025-10-10
 
 ### Added
