@@ -47,7 +47,7 @@ The documentation of the released version is available on [doc.rs](https://docs.
 
 ### MSB and LSB ordering
 
-When defining a field, the MSB comes first and the LSB second.
+When defining a field, the MSB (Most Sigificant Bit) comes first and the LSB (Least Sigificant Bit) second.
 
 ### Sign extension and valid range of signed field
 
