@@ -474,7 +474,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         let ty_into = field.ty_into().unwrap();
                         let (return_ty, last_line) = if field.try_into {
                             (
-                                quote!{Result<#ty_into, <#ty_into as TryFrom<#ty>>::Error>}, 
+                                quote!{Result<#ty_into, <#ty_into as TryFrom<#ty>>::Error>},
                                 quote!{::bitfield::TryInto::try_into(raw_value)}
                             )
                         } else {
