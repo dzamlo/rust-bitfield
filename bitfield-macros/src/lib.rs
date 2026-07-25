@@ -67,7 +67,7 @@ impl Parse for BitfieldPosition {
 
 enum FieldTy {
     Bool,
-    Type(Type),
+    Type(Box<Type>),
     None,
 }
 
@@ -75,7 +75,7 @@ impl FieldTy {
     fn as_type(&self) -> Option<Type> {
         match self {
             FieldTy::Bool => Some(syn::parse_str("bool").unwrap()),
-            FieldTy::Type(ty) => Some(ty.clone()),
+            FieldTy::Type(ty) => Some(*ty.clone()),
             FieldTy::None => None,
         }
     }
@@ -85,8 +85,8 @@ impl FieldTy {
     }
 }
 
-impl From<Option<Type>> for FieldTy {
-    fn from(value: Option<Type>) -> Self {
+impl From<Option<Box<Type>>> for FieldTy {
+    fn from(value: Option<Box<Type>>) -> Self {
         match value {
             Some(ty) => FieldTy::Type(ty),
             None => FieldTy::None,
@@ -201,8 +201,8 @@ impl Parse for BitfieldField {
 }
 
 enum BitfieldFieldLine {
-    NewDefaultType(Type),
-    Field(BitfieldField),
+    NewDefaultType(Box<Type>),
+    Field(Box<BitfieldField>),
 }
 
 impl Parse for BitfieldFieldLine {
@@ -234,7 +234,7 @@ impl BitfieldFieldLines {
                     if field.ty.is_none() {
                         field.ty = default_ty.clone().into();
                     }
-                    result.push(field)
+                    result.push(*field)
                 }
             }
         }
