@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.5] - 2026-07-25
+
 ### Added
 - Include the Apache 2.0 and MIT license files in the `bitfield-macros` package.
 
@@ -112,7 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `from into` can be used in place of `from` to change the input type of the setter. Thanks to @roblabla
 
-[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.4...HEAD
+[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.5...HEAD
+[0.19.5]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.4...v0.19.5
 [0.19.4]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.3...v0.19.4
 [0.19.3]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.2...v0.19.3
 [0.19.2]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.1...v0.19.2
