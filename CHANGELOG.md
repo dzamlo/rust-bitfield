@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Include the Apache 2.0 and MIT license files in the `bitfield-macros` package.
+
+### Changed
+- Explain the MSB and LSB abbreviations in the README.
+- Upgrade `bitfield-macros` to `syn` 3.
+- Reduce stack usage in the `bitfield-macros` parser by boxing large enum variants.
+
 ## [0.19.4] - 2025-11-16
 
 ### Added
@@ -119,4 +127,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.15.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.13.2...v0.14.0
 [0.13.2]: https://github.com/dzamlo/rust-bitfield/compare/v0.13.1...v0.13.2
-
