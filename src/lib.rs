@@ -13,11 +13,11 @@
 
 pub use bitfield_macros::{bitfield_constructor, bitfield_debug, bitfield_fields};
 
-/// Internal use macro, that `debug_assert` than msb >= lsb and thus they are not inverted
+/// Internal use macro, that asserts that msb >= lsb and thus they are not inverted
 #[macro_export]
 macro_rules! check_msb_lsb_order {
     ($msb:expr, $lsb:expr) => {
-        debug_assert!(
+        assert!(
             $msb >= $lsb,
             "the MSB ({}) is smaller than the LSB ({}), you likely inverted them",
             $msb,
