@@ -241,6 +241,7 @@ fn test_try_into() {
     assert_eq!(fb.from_foo8(), Ok(EvenU8(2)));
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (1) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_1() {
@@ -248,6 +249,7 @@ fn lsb_msb_inverted_should_panic_on_access_1() {
     fb.lsb_msb_inverted();
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (1) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_2() {
@@ -255,6 +257,7 @@ fn lsb_msb_inverted_should_panic_on_access_2() {
     fb.set_lsb_msb_inverted(1);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (2) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_3() {
@@ -262,6 +265,7 @@ fn lsb_msb_inverted_should_panic_on_access_3() {
     fb.lsb_msb_inverted_array(0);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (2) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_4() {
@@ -759,6 +763,7 @@ fn test_arraybitfield() {
     assert_eq!([0xF0, 0xFF, 0x0F], ab.0);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_1() {
@@ -766,6 +771,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_1() {
     ab.lsb_msb_inverted();
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_2() {
@@ -773,6 +779,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_2() {
     ab.set_lsb_msb_inverted(1);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_3() {
@@ -780,6 +787,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_3() {
     ab.lsb_msb_inverted_array(0);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_4() {
@@ -953,6 +961,7 @@ fn test_arraybitfield_msb0() {
     assert_eq!([0x0F, 0xFF, 0xF0], ab.0);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_1() {
@@ -960,6 +969,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_1() {
     ab.lsb_msb_inverted();
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_2() {
@@ -967,6 +977,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_2() {
     ab.set_lsb_msb_inverted(1);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_3() {
@@ -974,6 +985,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_3() {
     ab.lsb_msb_inverted_array(0);
 }
 
+#[cfg(debug_assertions)]
 #[test]
 #[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_4() {
