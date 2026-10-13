@@ -34,6 +34,8 @@ impl TryFrom<u8> for EvenU8 {
     type Error = ();
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
+        // is_multiple_of is not supported in our MSRV
+        #[allow(clippy::manual_is_multiple_of)]
         if value % 2 == 0 {
             Ok(EvenU8(value))
         } else {
