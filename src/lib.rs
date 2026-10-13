@@ -282,6 +282,46 @@ macro_rules! bitfield_bitrange {
 /// documentation comments, followed by a semicolon, some optional elements, and finally the fields
 /// as described in the `bitfield_fields` documentation.
 ///
+/// The inner field is private by default. To expose it (and the tuple constructor), add
+/// `pub` inside the parentheses: `pub struct Flags(pub u32);`. Restricted visibility,
+/// such as `pub(crate)`, is also supported. For slice storage, use
+/// `pub struct Flags(pub [u8]);` or `pub struct Flags(pub MSB0 [u8]);`.
+///
+/// A public struct does not make its inner field public:
+///
+/// ```compile_fail,E0616
+/// mod flags {
+///     bitfield::bitfield! {
+///         #[derive(Default)]
+///         pub struct Flags(u32);
+///     }
+/// }
+/// let flags = flags::Flags::default();
+/// let _ = flags.0;
+/// ```
+///
+/// ```compile_fail,E0616
+/// mod flags {
+///     bitfield::bitfield! {
+///         #[derive(Default)]
+///         pub struct Flags([u8]);
+///     }
+/// }
+/// let flags = flags::Flags::<[u8; 1]>::default();
+/// let _ = flags.0;
+/// ```
+///
+/// ```compile_fail,E0616
+/// mod flags {
+///     bitfield::bitfield! {
+///         #[derive(Default)]
+///         pub struct Flags(MSB0 [u8]);
+///     }
+/// }
+/// let flags = flags::Flags::<[u8; 1]>::default();
+/// let _ = flags.0;
+/// ```
+///
 /// The first optional element is `no default BitRange;`. With that, no implementation of
 /// `BitRange` will be generated.
 ///
@@ -346,14 +386,14 @@ macro_rules! bitfield {
 
     // If we have `impl <Trait>` without `no default BitRange`, we will still match, because when
     // we call `bitfield_bitrange`, we add `no default BitRange`.
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis [$t:ty]); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
         bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name([$t]); $($rest)*}
 
-        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange;  $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis [$t]); no default BitRange;  $($rest)*}
     };
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); no default BitRange; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis [$t:ty]); no default BitRange; $($rest:tt)*) => {
         $(#[$attribute])*
-        $vis struct $name<T>(pub T);
+        $vis struct $name<T>($inner_vis T);
 
         //impl<T: AsMut<[$t]> + AsRef<[$t]>> $name<T> {
         //    bitfield_fields!{$($rest)*}
@@ -365,37 +405,37 @@ macro_rules! bitfield {
            bitfield_fields!{only setter; $($rest)*}
         }
     };
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident([$t:ty]); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis [$t:ty]); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name([$t]));
-        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis [$t]); no default BitRange; $($rest)*}
     };
 
     // The only difference between the MSB0 version anf the non-MSB0 version, is the BitRange
     // implementation. We delegate everything else to the non-MSB0 version of the macro.
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident(MSB0 [$t:ty]); no default BitRange; $($rest:tt)*) => {
-        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis MSB0 [$t:ty]); no default BitRange; $($rest:tt)*) => {
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis [$t]); no default BitRange; $($rest)*}
     };
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident(MSB0 [$t:ty]); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis MSB0 [$t:ty]); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name(MSB0 [$t]));
-        bitfield!{$(#[$attribute])* $vis struct $name([$t]); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis [$t]); no default BitRange; $($rest)*}
     };
 
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis $t:ty); no default BitRange; impl $trait:ident$({$($trait_arg:tt)*})?; $($rest:tt)*) => {
         bitfield_impl!{$trait$({$($trait_arg)*})? for struct $name($t); $($rest)*}
 
-        bitfield!{$(#[$attribute])* $vis struct $name($t); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis $t); no default BitRange; $($rest)*}
     };
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); no default BitRange; $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis $t:ty); no default BitRange; $($rest:tt)*) => {
         $(#[$attribute])*
-        $vis struct $name(pub $t);
+        $vis struct $name($inner_vis $t);
 
         impl $name {
             bitfield_fields!{$t; $($rest)*}
          }
     };
-    ($(#[$attribute:meta])* $vis:vis struct $name:ident($t:ty); $($rest:tt)*) => {
+    ($(#[$attribute:meta])* $vis:vis struct $name:ident($inner_vis:vis $t:ty); $($rest:tt)*) => {
         bitfield_bitrange!(struct $name($t));
-        bitfield!{$(#[$attribute])* $vis struct $name($t); no default BitRange; $($rest)*}
+        bitfield!{$(#[$attribute])* $vis struct $name($inner_vis $t); no default BitRange; $($rest)*}
     };
 }
 

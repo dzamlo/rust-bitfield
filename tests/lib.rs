@@ -1043,7 +1043,7 @@ fn test_arraybitfield_constructor() {
 mod some_module {
     use bitfield::bitfield;
     bitfield! {
-        pub(super) struct PubBitFieldInAModule(u32);
+        pub(super) struct PubBitFieldInAModule(pub u32);
         impl Debug;
         /// Attribute works on pub fields
         pub field1, set_field1: 1;
