@@ -1,7 +1,7 @@
 #![recursion_limit = "128"]
 #![allow(clippy::cognitive_complexity)]
 
-use bitfield::{bitfield, bitfield_fields};
+use bitfield::{bitfield, bitfield_fields, BitRange, BitRangeMut};
 
 // We use a constant to make sure bits positions don't need to be literals but
 // can also be constants or expressions.
@@ -127,11 +127,6 @@ impl FooBar {
         u8, from, _: 2,0;
         u8, into, _: 2,0;
     }
-
-    bitfield_fields! {
-        u8, lsb_msb_inverted, set_lsb_msb_inverted: 1, 3;
-        u8, lsb_msb_inverted_array, set_lsb_msb_inverted_array: 2, 3, 2;
-    }
 }
 
 #[test]
@@ -248,7 +243,7 @@ fn test_try_into() {
 #[should_panic(expected = "the MSB (1) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_1() {
     let fb = FooBar(0);
-    fb.lsb_msb_inverted();
+    let _: u8 = fb.bit_range(1, 3);
 }
 
 #[cfg(debug_assertions)]
@@ -256,23 +251,7 @@ fn lsb_msb_inverted_should_panic_on_access_1() {
 #[should_panic(expected = "the MSB (1) is smaller than the LSB (3), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_2() {
     let mut fb = FooBar(0);
-    fb.set_lsb_msb_inverted(1);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (2) is smaller than the LSB (3), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_3() {
-    let fb = FooBar(0);
-    fb.lsb_msb_inverted_array(0);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (2) is smaller than the LSB (3), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_4() {
-    let mut fb = FooBar(0);
-    fb.set_lsb_msb_inverted_array(0, 1);
+    fb.set_bit_range(1, 3, 1u8);
 }
 
 bitfield! {
@@ -657,13 +636,6 @@ bitfield! {
     u8, from Foo, from_foo3, set_from_foo3: 25, 24;
 }
 
-impl ArrayBitfield<[u8; 3]> {
-    bitfield_fields! {
-        u8, lsb_msb_inverted, set_lsb_msb_inverted: 3, 4;
-        u8, lsb_msb_inverted_array, set_lsb_msb_inverted_array: 4, 5, 2;
-    }
-}
-
 #[test]
 fn test_arraybitfield() {
     let mut ab = ArrayBitfield([0; 3]);
@@ -770,7 +742,7 @@ fn test_arraybitfield() {
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_1() {
     let ab = ArrayBitfield([0; 3]);
-    ab.lsb_msb_inverted();
+    let _: u8 = ab.bit_range(3, 4);
 }
 
 #[cfg(debug_assertions)]
@@ -778,23 +750,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_1() {
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_2() {
     let mut ab = ArrayBitfield([0; 3]);
-    ab.set_lsb_msb_inverted(1);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_3() {
-    let ab = ArrayBitfield([0; 3]);
-    ab.lsb_msb_inverted_array(0);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_with_array_bitfield_4() {
-    let mut ab = ArrayBitfield([0; 3]);
-    ab.set_lsb_msb_inverted_array(1, 1);
+    ab.set_bit_range(3, 4, 1u8);
 }
 
 #[test]
@@ -862,13 +818,6 @@ bitfield! {
     signed_foo2, set_signed_foo2: 7, 0;
     signed_foo3, set_signed_foo3: 8, 1;
     signed_foo4, set_signed_foo4: 19, 4;
-}
-
-impl ArrayBitfieldMsb0<[u8; 3]> {
-    bitfield_fields! {
-        u8, lsb_msb_inverted, set_lsb_msb_inverted: 3, 4;
-        u8, lsb_msb_inverted_array, set_lsb_msb_inverted_array: 4, 5, 2;
-    }
 }
 
 #[test]
@@ -968,7 +917,7 @@ fn test_arraybitfield_msb0() {
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_1() {
     let ab = ArrayBitfieldMsb0([0; 3]);
-    ab.lsb_msb_inverted();
+    let _: u8 = ab.bit_range(3, 4);
 }
 
 #[cfg(debug_assertions)]
@@ -976,23 +925,7 @@ fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_1() {
 #[should_panic(expected = "the MSB (3) is smaller than the LSB (4), you likely inverted them")]
 fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_2() {
     let mut ab = ArrayBitfieldMsb0([0; 3]);
-    ab.set_lsb_msb_inverted(1);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_3() {
-    let ab = ArrayBitfieldMsb0([0; 3]);
-    ab.lsb_msb_inverted_array(0);
-}
-
-#[cfg(debug_assertions)]
-#[test]
-#[should_panic(expected = "the MSB (4) is smaller than the LSB (5), you likely inverted them")]
-fn lsb_msb_inverted_should_panic_on_access_with_array_msb0_bitfield_4() {
-    let mut ab = ArrayBitfieldMsb0([0; 3]);
-    ab.set_lsb_msb_inverted_array(1, 1);
+    ab.set_bit_range(3, 4, 1u8);
 }
 
 #[test]
@@ -1500,4 +1433,22 @@ fn value_signed() {
 #[test]
 fn mask_signed() {
     assert_eq!(FooBarSigned::A_MASK, 0b1110u32);
+}
+
+#[test]
+#[deny(unused_comparisons)]
+fn zero_lsb_does_not_warn() {
+    bitfield! {
+        struct ZeroLsb(u8);
+        u8, mask FIELD_MASK(u8), field, set_field: 1usize, 0usize;
+        u8, mask ARRAY_MASK(u8), array, set_array: 1usize, 0usize, 2;
+    }
+
+    let mut value = ZeroLsb(0);
+    value.set_field(3);
+    assert_eq!(value.field(), 3);
+    value.set_array(0, 2);
+    assert_eq!(value.array(0), 2);
+    assert_eq!(ZeroLsb::FIELD_MASK, 0b11);
+    assert_eq!(ZeroLsb::ARRAY_MASK, 0b1111);
 }

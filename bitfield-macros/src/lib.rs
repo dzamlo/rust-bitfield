@@ -43,6 +43,20 @@ enum BitfieldPosition {
     MsbLsbCount(Expr, Expr, Expr),
 }
 
+impl BitfieldPosition {
+    fn assert_msb_lsb_order(&self) -> proc_macro2::TokenStream {
+        match self {
+            Self::Bit(_) => quote! {},
+            Self::MsbLsb(msb, lsb) | Self::MsbLsbCount(msb, lsb, _) => quote! {
+                #[allow(unused_comparisons, clippy::eq_op, clippy::absurd_extreme_comparisons)]
+                const {
+                    assert!(#msb >= #lsb, "the MSB must be greater than or equal to the LSB, you likely inverted them");
+                }
+            },
+        }
+    }
+}
+
 impl Parse for BitfieldPosition {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let bit_position_1 = input.parse()?;
@@ -424,6 +438,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
             let attrs = &field.attrs;
             let vis = &field.vis;
             let getter = &field.getter;
+            let check_order = field.bits_position.assert_msb_lsb_order();
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {
@@ -441,6 +456,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #getter(&self) -> Result<#ty_into, <#ty_into as TryFrom<#ty>>::Error> {
+                                #check_order
                                 use ::bitfield::BitRange;
                                 let raw_value: #ty = self.bit_range(#msb, #lsb);
                                 ::bitfield::TryInto::try_into(raw_value)
@@ -450,6 +466,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #getter(&self) -> #ty_into {
+                                #check_order
                                 use ::bitfield::BitRange;
                                 let raw_value: #ty = self.bit_range(#msb, #lsb);
                                 ::bitfield::Into::into(raw_value)
@@ -462,6 +479,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #getter(&self, index: usize) -> bool {
+                                #check_order
                                 use ::bitfield::Bit;
                                 assert_eq!(#msb, #lsb);
                                 use ::bitfield::BitRange;
@@ -483,6 +501,7 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #getter(&self, index: usize) -> #return_ty {
+                                #check_order
                                 use ::bitfield::BitRange;
                                 ::bitfield::check_msb_lsb_order!(#msb, #lsb);
                                 debug_assert!(index < #count);
@@ -512,6 +531,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
             let attrs = &field.attrs;
             let vis = &field.vis;
             let setter = &field.setter;
+            let check_order = field.bits_position.assert_msb_lsb_order();
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {
@@ -528,6 +548,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                     quote! {
                         #(#attrs)*
                         #vis fn #setter(&mut self, value: #ty_from) {
+                            #check_order
                             use ::bitfield::BitRangeMut;
                             self.set_bit_range(#msb, #lsb, ::bitfield::Into::<#ty>::into(value));
                          }
@@ -539,6 +560,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #setter(&mut self, index: usize, value: #ty_from) {
+                                #check_order
                                 use ::bitfield::BitMut;
                                 debug_assert!(index < #count);;
                                 self.set_bit(#lsb+index, ::bitfield::Into::<bool>::into(value));
@@ -550,6 +572,7 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                         quote! {
                             #(#attrs)*
                             #vis fn #setter(&mut self, index: usize, value: #ty_from) {
+                                #check_order
                                 use ::bitfield::BitRangeMut;
                                 ::bitfield::check_msb_lsb_order!(#msb, #lsb);
                                 debug_assert!(index < #count);
@@ -578,6 +601,7 @@ fn generate_masks(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
             let vis = &field.vis;
             let mask_ident = &mask.ident;
             let mask_ty = &mask.ty;
+            let check_order = field.bits_position.assert_msb_lsb_order();
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {#vis const #mask_ident: #mask_ty = 1 << (#bit);}
@@ -585,6 +609,7 @@ fn generate_masks(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                 BitfieldPosition::MsbLsb(msb, lsb) => {
                     quote! {
                         #vis const #mask_ident: #mask_ty = {
+                            #check_order
                             let msb = #msb;
                             let lsb = #lsb;
                             let mut i = lsb;
@@ -600,6 +625,7 @@ fn generate_masks(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
                 BitfieldPosition::MsbLsbCount(msb, lsb, count) => {
                     quote! {
                         #vis const #mask_ident: #mask_ty = {
+                            #check_order
                             let msb = #msb;
                             let lsb = #lsb;
                             let count = #count;

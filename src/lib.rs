@@ -322,6 +322,56 @@ macro_rules! bitfield_bitrange {
 /// let _ = flags.0;
 /// ```
 ///
+/// Ranges require `msb >= lsb`, checked at compile time when an accessor or mask is used.
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, get, _: 1, 3;
+/// }
+/// let _ = Invalid(0).get();
+/// ```
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, _, set: 1, 3;
+/// }
+/// Invalid(0).set(1);
+/// ```
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, get, _: 1, 3, 2;
+/// }
+/// let _ = Invalid(0).get(0);
+/// ```
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, _, set: 1, 3, 2;
+/// }
+/// Invalid(0).set(0, 1);
+/// ```
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, mask MASK(u8), _, _: 1, 3;
+/// }
+/// let _ = Invalid::MASK;
+/// ```
+///
+/// ```compile_fail,E0080
+/// bitfield::bitfield! {
+///     struct Invalid(u8);
+///     u8, mask MASK(u8), _, _: 1, 3, 2;
+/// }
+/// let _ = Invalid::MASK;
+/// ```
+///
 /// The first optional element is `no default BitRange;`. With that, no implementation of
 /// `BitRange` will be generated.
 ///
