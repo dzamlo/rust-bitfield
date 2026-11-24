@@ -1452,3 +1452,129 @@ fn zero_lsb_does_not_warn() {
     assert_eq!(ZeroLsb::FIELD_MASK, 0b11);
     assert_eq!(ZeroLsb::ARRAY_MASK, 0b1111);
 }
+
+#[test]
+fn no_const_checks_allows_runtime_positions() {
+    struct Dynamic(u32, usize);
+
+    impl BitRange<u8> for Dynamic {
+        fn bit_range(&self, msb: usize, lsb: usize) -> u8 {
+            self.0.bit_range(msb, lsb)
+        }
+    }
+
+    impl BitRangeMut<u8> for Dynamic {
+        fn set_bit_range(&mut self, msb: usize, lsb: usize, value: u8) {
+            self.0.set_bit_range(msb, lsb, value);
+        }
+    }
+
+    impl Dynamic {
+        bitfield_fields! {
+            no_const_checks;
+            u8, field, set_field: self.1, 0;
+            u8, array, set_array: self.1, 0, 2;
+        }
+    }
+
+    let mut value = Dynamic(0, 3);
+    value.set_field(5);
+    assert_eq!(value.field(), 5);
+    value.set_array(1, 10);
+    assert_eq!(value.array(0), 5);
+    assert_eq!(value.array(1), 10);
+    assert_eq!(value.0, 0xa5);
+}
+
+#[test]
+fn no_const_checks_applies_to_only_masks() {
+    struct Masks;
+    impl Masks {
+        bitfield_fields! {
+            only mask;
+            no_const_checks;
+            u8, mask INVERTED(u8), _, _: 1, 3;
+            u8, mask VALID(u8), _, _: 3, 0;
+        }
+    }
+    assert_eq!(Masks::INVERTED, 0);
+    assert_eq!(Masks::VALID, 0xf);
+}
+
+bitfield! {
+    struct FooNoConstChecks(u8);
+    no_const_checks;
+    u8, mask FIELD_MASK_NO_CONST_CHECKS(u8), field, set_field: 0, 1;
+    u8, mask ARRAY_MASK_NO_CONST_CHECKS(u8), array, set_array: 0, 1, 2;
+}
+
+#[test]
+fn no_const_checks_with_bitfield_debug_and_constructor() {
+    bitfield! {
+        struct Scalar(u8);
+        impl Debug;
+        impl new;
+        no_const_checks;
+        u8;
+        field, set_field: 3, 0;
+    }
+    let scalar = Scalar::new(5);
+    assert_eq!(scalar.field(), 5);
+    assert_eq!(format!("{:?}", scalar), "Scalar { .0: 5, field: 5 }");
+}
+
+#[test]
+fn no_const_checks_with_slice_bitfields() {
+    bitfield! {
+        struct Slice([u8]);
+        impl Debug;
+        impl new;
+        no_const_checks;
+        u8, field, set_field: 3, 0;
+    }
+    let slice = Slice::<[u8; 1]>::new(5);
+    assert_eq!(slice.field(), 5);
+    assert_eq!(format!("{:?}", slice), "Slice { .0: [5], field: 5 }");
+}
+
+#[test]
+fn no_const_checks_with_msb0_bitfields() {
+    bitfield! {
+        struct Msb0(MSB0 [u8]);
+        impl Debug;
+        impl new;
+        no_const_checks;
+        u8, field, set_field: 3, 0;
+    }
+    let msb0 = Msb0::<[u8; 1]>::new(5);
+    assert_eq!(msb0.field(), 5);
+    assert_eq!(format!("{:?}", msb0), "Msb0 { .0: [80], field: 5 }");
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic(expected = "the MSB (0) is smaller than the LSB (1), you likely inverted them")]
+fn no_const_checks_preserves_scalar_getter_debug_assert() {
+    FooNoConstChecks(0).field();
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic(expected = "the MSB (0) is smaller than the LSB (1), you likely inverted them")]
+fn no_const_checks_preserves_scalar_setter_debug_assert() {
+    FooNoConstChecks(0).set_field(1);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic(expected = "the MSB (0) is smaller than the LSB (1), you likely inverted them")]
+fn no_const_checks_preserves_array_getter_debug_assert() {
+    FooNoConstChecks(0).array(0);
+}
+
+#[cfg(debug_assertions)]
+#[test]
+#[should_panic(expected = "the MSB (0) is smaller than the LSB (1), you likely inverted them")]
+fn no_const_checks_preserves_array_setter_debug_assert() {
+    FooNoConstChecks(0).set_array(0, 1);
+}

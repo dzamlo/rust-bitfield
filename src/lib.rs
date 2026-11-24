@@ -323,6 +323,8 @@ macro_rules! bitfield_bitrange {
 /// ```
 ///
 /// Ranges require `msb >= lsb`, checked at compile time when an accessor or mask is used.
+/// Add `no_const_checks;` after any `impl ...;` declarations to disable these checks
+/// for all fields. Runtime checks still apply.
 ///
 /// ```compile_fail,E0080
 /// bitfield::bitfield! {

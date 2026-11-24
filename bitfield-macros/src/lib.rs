@@ -17,6 +17,7 @@ mod kw {
     custom_keyword!(try_into);
     custom_keyword!(mask);
     custom_keyword!(only);
+    custom_keyword!(no_const_checks);
     custom_keyword!(setter);
 }
 
@@ -44,7 +45,10 @@ enum BitfieldPosition {
 }
 
 impl BitfieldPosition {
-    fn assert_msb_lsb_order(&self) -> proc_macro2::TokenStream {
+    fn assert_msb_lsb_order(&self, enabled: bool) -> proc_macro2::TokenStream {
+        if !enabled {
+            return quote! {};
+        }
         match self {
             Self::Bit(_) => quote! {},
             Self::MsbLsb(msb, lsb) | Self::MsbLsbCount(msb, lsb, _) => quote! {
@@ -215,12 +219,17 @@ impl Parse for BitfieldField {
 }
 
 enum BitfieldFieldLine {
+    NoConstChecks,
     NewDefaultType(Box<Type>),
     Field(Box<BitfieldField>),
 }
 
 impl Parse for BitfieldFieldLine {
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        if input.peek(kw::no_const_checks) && input.peek2(Token!(;)) {
+            input.parse::<kw::no_const_checks>()?;
+            return Ok(BitfieldFieldLine::NoConstChecks);
+        }
         let input_fork = input.fork();
 
         Ok(match input_fork.parse() {
@@ -243,6 +252,7 @@ impl BitfieldFieldLines {
         let mut default_ty = None;
         for line in self.0 {
             match line {
+                BitfieldFieldLine::NoConstChecks => {}
                 BitfieldFieldLine::NewDefaultType(ty) => default_ty = Some(ty),
                 BitfieldFieldLine::Field(mut field) => {
                     if field.ty.is_none() {
@@ -292,6 +302,7 @@ impl Only {
 
 struct BitfieldFieldsWithOnly {
     only: Only,
+    const_checks: bool,
     fields: BitfieldFieldLines,
 }
 
@@ -317,9 +328,17 @@ impl Parse for BitfieldFieldsWithOnly {
         } else {
             Only::None
         };
-        let fields = input.parse()?;
+        let fields: BitfieldFieldLines = input.parse()?;
+        let const_checks = !fields
+            .0
+            .iter()
+            .any(|line| matches!(line, BitfieldFieldLine::NoConstChecks));
 
-        Ok(BitfieldFieldsWithOnly { only, fields })
+        Ok(BitfieldFieldsWithOnly {
+            only,
+            const_checks,
+            fields,
+        })
     }
 }
 
@@ -331,6 +350,27 @@ impl Parse for BitfieldFieldsWithOnly {
 ///
 /// The syntax of this macro is composed of declarations ended by semicolons. There are two types
 /// of declarations: default type, and fields.
+///
+/// Add `no_const_checks;` to the declarations to disable compile-time range checks
+/// for every getter, setter, and mask in this call. When using `only getter;`,
+/// `only setter;`, or `only mask;`, put `no_const_checks;` after that option.
+/// Runtime checks in the generated accessors and the `BitRange` implementations still apply.
+/// This permits positions that depend on runtime values, for example:
+///
+/// ```ignore
+/// struct Dynamic(u8);
+/// bitfield::bitfield_bitrange! { struct Dynamic(u8) }
+/// impl Dynamic {
+///     bitfield::bitfield_fields! {
+///         no_const_checks;
+///         u8, field, set_field: self.0 as usize, 0;
+///     }
+/// }
+/// let mut value = Dynamic(3);
+/// assert_eq!(value.field(), 3);
+/// value.set_field(2);
+/// assert_eq!(value.0, 2);
+/// ```
 ///
 /// A default type is just a type followed by a semicolon. This will affect all the following field
 /// declarations.
@@ -402,22 +442,23 @@ pub fn bitfield_fields(input: TokenStream) -> TokenStream {
     let fields_with_only = parse_macro_input!(input as BitfieldFieldsWithOnly);
 
     let only = fields_with_only.only;
+    let const_checks = fields_with_only.const_checks;
     let fields = fields_with_only.fields.into_fields();
 
     let getters = if only.getter_or_none() {
-        generate_getters(&fields)
+        generate_getters(&fields, const_checks)
     } else {
         quote! {}
     };
 
     let setters = if only.setter_or_none() {
-        generate_setters(&fields)
+        generate_setters(&fields, const_checks)
     } else {
         quote! {}
     };
 
     let masks = if only.mask_or_none() {
-        generate_masks(&fields)
+        generate_masks(&fields, const_checks)
     } else {
         quote! {}
     };
@@ -432,13 +473,13 @@ pub fn bitfield_fields(input: TokenStream) -> TokenStream {
 static MISSING_TYPE_ERROR_MESSAGE: &str =
     "For non single bit field, you need to either specify a default type or a type for each field";
 
-fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
+fn generate_getters(fields: &[BitfieldField], const_checks: bool) -> proc_macro2::TokenStream {
     let getters = fields.iter().flat_map(|field| {
         if field.getter != "_" {
             let attrs = &field.attrs;
             let vis = &field.vis;
             let getter = &field.getter;
-            let check_order = field.bits_position.assert_msb_lsb_order();
+            let check_order = field.bits_position.assert_msb_lsb_order(const_checks);
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {
@@ -525,13 +566,13 @@ fn generate_getters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
     quote! { #(#getters)* }
 }
 
-fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
+fn generate_setters(fields: &[BitfieldField], const_checks: bool) -> proc_macro2::TokenStream {
     let setters = fields.iter().flat_map(|field| {
         if field.setter != "_" {
             let attrs = &field.attrs;
             let vis = &field.vis;
             let setter = &field.setter;
-            let check_order = field.bits_position.assert_msb_lsb_order();
+            let check_order = field.bits_position.assert_msb_lsb_order(const_checks);
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {
@@ -595,13 +636,13 @@ fn generate_setters(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
     quote! { #(#setters)* }
 }
 
-fn generate_masks(fields: &[BitfieldField]) -> proc_macro2::TokenStream {
+fn generate_masks(fields: &[BitfieldField], const_checks: bool) -> proc_macro2::TokenStream {
     let masks = fields.iter().flat_map(|field| {
         if let Some(mask) = &field.mask {
             let vis = &field.vis;
             let mask_ident = &mask.ident;
             let mask_ty = &mask.ty;
-            let check_order = field.bits_position.assert_msb_lsb_order();
+            let check_order = field.bits_position.assert_msb_lsb_order(const_checks);
             Some(match &field.bits_position {
                 BitfieldPosition::Bit(bit) => {
                     quote! {#vis const #mask_ident: #mask_ty = 1 << (#bit);}
