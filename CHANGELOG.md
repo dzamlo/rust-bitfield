@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-24
+
 ### Breaking Changes
 - Generated range getters, setters, and masks now check `msb >= lsb` at compile time.
   Bit positions must be constant expressions unless `no_const_checks;` is used.
@@ -132,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `from into` can be used in place of `from` to change the input type of the setter. Thanks to @roblabla
 
-[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/dzamlo/rust-bitfield/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.5...v0.20.0
 [0.19.5]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.4...v0.19.5
 [0.19.4]: https://github.com/dzamlo/rust-bitfield/compare/v0.19.3...v0.19.4
