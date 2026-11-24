@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+- Generated range getters, setters, and masks now check `msb >= lsb` at compile time.
+  Bit positions must be constant expressions unless `no_const_checks;` is used.
+  Thanks to @PanAeon for helping me realize that compile-time checks were possible!
+
+### Added
+- Add `no_const_checks;` to `bitfield!` or `bitfield_fields!` to disable compile-time range checks
+  for all fields in the call. Runtime debug assertions remain active.
+
 ## [0.20.0] - 2026-10-13
 
 ### Breaking Changes
